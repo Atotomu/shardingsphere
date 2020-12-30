@@ -19,16 +19,15 @@ package org.apache.shardingsphere.driver.jdbc.adapter;
 
 import com.google.common.collect.Lists;
 import org.apache.shardingsphere.driver.common.base.AbstractShardingSphereDataSourceForShardingTest;
-import org.apache.shardingsphere.infra.database.type.DatabaseTypes;
 import org.apache.shardingsphere.driver.jdbc.core.connection.ShardingSphereConnection;
 import org.apache.shardingsphere.driver.jdbc.core.statement.ShardingSpherePreparedStatement;
 import org.apache.shardingsphere.driver.jdbc.core.statement.ShardingSphereStatement;
 import org.apache.shardingsphere.driver.jdbc.util.JDBCTestSQL;
 import org.apache.shardingsphere.infra.database.type.DatabaseType;
+import org.apache.shardingsphere.infra.database.type.DatabaseTypeRegistry;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -45,6 +44,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -60,7 +60,7 @@ public final class StatementAdapterTest extends AbstractShardingSphereDataSource
     public void init() {
         ShardingSphereConnection connection = getShardingSphereDataSource().getConnection();
         shardingSphereConnections.add(connection);
-        statements.put(DatabaseTypes.getActualDatabaseType("H2"), connection.createStatement());
+        statements.put(DatabaseTypeRegistry.getActualDatabaseType("H2"), connection.createStatement());
     }
     
     @After
@@ -121,7 +121,26 @@ public final class StatementAdapterTest extends AbstractShardingSphereDataSource
             assertThat(each.getFetchSize(), is(fetchSize));
         }
     }
-    
+
+    @Test
+    public void assertSetFetchDirection() throws SQLException {
+        for (Statement each : statements.values()) {
+            each.setFetchDirection(ResultSet.FETCH_FORWARD);
+            each.executeQuery(sql);
+            assertFetchDirection((ShardingSphereStatement) each, ResultSet.FETCH_FORWARD);
+            each.setFetchDirection(ResultSet.FETCH_REVERSE);
+            assertFetchDirection((ShardingSphereStatement) each, ResultSet.FETCH_REVERSE);
+        }
+    }
+
+    private void assertFetchDirection(final ShardingSphereStatement actual, final int fetchDirection) throws SQLException {
+        assertThat(actual.getFetchDirection(), is(fetchDirection));
+        for (Statement each : actual.getRoutedStatements()) {
+            // H2,MySQL getFetchDirection() always return ResultSet.FETCH_FORWARD
+            assertThat(each.getFetchDirection(), is(ResultSet.FETCH_FORWARD));
+        }
+    }
+
     @Test
     public void assertSetEscapeProcessing() throws SQLException {
         for (Statement each : statements.values()) {
@@ -167,9 +186,9 @@ public final class StatementAdapterTest extends AbstractShardingSphereDataSource
     
     @Test
     public void assertOverMaxUpdateRow() throws SQLException {
-        final Statement statement1 = Mockito.mock(Statement.class);
+        Statement statement1 = mock(Statement.class);
         when(statement1.getUpdateCount()).thenReturn(Integer.MAX_VALUE);
-        final Statement statement2 = Mockito.mock(Statement.class);
+        Statement statement2 = mock(Statement.class);
         when(statement2.getUpdateCount()).thenReturn(Integer.MAX_VALUE);
         ShardingSphereStatement shardingSphereStatement1 = spy(new ShardingSphereStatement(getShardingSphereDataSource().getConnection()));
         doReturn(true).when(shardingSphereStatement1).isAccumulate();
@@ -183,9 +202,9 @@ public final class StatementAdapterTest extends AbstractShardingSphereDataSource
     
     @Test
     public void assertNotAccumulateUpdateRow() throws SQLException {
-        final Statement statement1 = Mockito.mock(Statement.class);
+        Statement statement1 = mock(Statement.class);
         when(statement1.getUpdateCount()).thenReturn(10);
-        final Statement statement2 = Mockito.mock(Statement.class);
+        Statement statement2 = mock(Statement.class);
         when(statement2.getUpdateCount()).thenReturn(10);
         ShardingSphereStatement shardingSphereStatement1 = spy(new ShardingSphereStatement(getShardingSphereDataSource().getConnection()));
         doReturn(false).when(shardingSphereStatement1).isAccumulate();
@@ -245,7 +264,7 @@ public final class StatementAdapterTest extends AbstractShardingSphereDataSource
         for (Entry<DatabaseType, Statement> each : statements.entrySet()) {
             each.getValue().executeQuery(sql);
             each.getValue().setMaxFieldSize(10);
-            assertThat(each.getValue().getMaxFieldSize(), is(DatabaseTypes.getActualDatabaseType("H2") == each.getKey() ? 0 : 10));
+            assertThat(each.getValue().getMaxFieldSize(), is(DatabaseTypeRegistry.getActualDatabaseType("H2") == each.getKey() ? 0 : 10));
         }
     }
     

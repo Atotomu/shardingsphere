@@ -23,9 +23,12 @@ import org.apache.shardingsphere.sharding.api.sharding.standard.StandardSharding
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Properties;
 
 public final class StandardOrderShardingAlgorithm implements StandardShardingAlgorithm<Integer> {
+    
+    @Override
+    public void init() {
+    }
     
     @Override
     public String doSharding(final Collection<String> availableTargetNames, final PreciseShardingValue<Integer> shardingValue) {
@@ -53,14 +56,5 @@ public final class StandardOrderShardingAlgorithm implements StandardShardingAlg
     @Override
     public String getType() {
         return "STANDARD_TEST";
-    }
-    
-    @Override
-    public Properties getProperties() {
-        return new Properties();
-    }
-    
-    @Override
-    public void setProperties(final Properties properties) {
     }
 }

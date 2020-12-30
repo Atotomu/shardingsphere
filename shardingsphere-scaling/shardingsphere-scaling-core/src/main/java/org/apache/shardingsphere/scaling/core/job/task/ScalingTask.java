@@ -17,18 +17,33 @@
 
 package org.apache.shardingsphere.scaling.core.job.task;
 
-import org.apache.shardingsphere.scaling.core.execute.executor.ShardingScalingExecutor;
-import org.apache.shardingsphere.scaling.core.job.SyncProgress;
+import org.apache.shardingsphere.scaling.core.execute.executor.ScalingExecutor;
+import org.apache.shardingsphere.scaling.core.job.TaskProgress;
+import org.apache.shardingsphere.scaling.core.job.position.PositionManager;
 
 /**
- * Sync task interface.
+ * Scaling task interface.
  */
-public interface ScalingTask extends ShardingScalingExecutor {
+public interface ScalingTask extends ScalingExecutor {
     
     /**
-     * Get synchronize progress.
+     * Get Task progress.
      *
-     * @return migrate progress
+     * @return Task progress
      */
-    SyncProgress getProgress();
+    TaskProgress getProgress();
+    
+    /**
+     * Get position manager.
+     *
+     * @return position manager
+     */
+    PositionManager getPositionManager();
+    
+    /**
+     * Get task id.
+     *
+     * @return task id
+     */
+    String getTaskId();
 }

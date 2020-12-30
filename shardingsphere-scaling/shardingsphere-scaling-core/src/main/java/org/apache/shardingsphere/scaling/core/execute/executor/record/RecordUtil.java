@@ -17,12 +17,17 @@
 
 package org.apache.shardingsphere.scaling.core.execute.executor.record;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
- * Record util.
+ * Record utility.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class RecordUtil {
     
     /**
@@ -32,9 +37,26 @@ public final class RecordUtil {
      * @return primary columns
      */
     public static List<Column> extractPrimaryColumns(final DataRecord dataRecord) {
-        List<Column> result = new ArrayList<>();
+        List<Column> result = new ArrayList<>(dataRecord.getColumns().size());
         for (Column each : dataRecord.getColumns()) {
             if (each.isPrimaryKey()) {
+                result.add(each);
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * Extract condition columns(include primary and sharding columns) from data record.
+     *
+     * @param dataRecord data record
+     * @param shardingColumns sharding columns
+     * @return condition columns
+     */
+    public static List<Column> extractConditionColumns(final DataRecord dataRecord, final Set<String> shardingColumns) {
+        List<Column> result = new ArrayList<>(dataRecord.getColumns().size());
+        for (Column each : dataRecord.getColumns()) {
+            if (each.isPrimaryKey() || shardingColumns.contains(each.getName())) {
                 result.add(each);
             }
         }
@@ -48,7 +70,7 @@ public final class RecordUtil {
      * @return updated columns
      */
     public static List<Column> extractUpdatedColumns(final DataRecord dataRecord) {
-        List<Column> result = new ArrayList<>();
+        List<Column> result = new ArrayList<>(dataRecord.getColumns().size());
         for (Column each : dataRecord.getColumns()) {
             if (each.isUpdated()) {
                 result.add(each);

@@ -18,12 +18,17 @@
 package org.apache.shardingsphere.db.protocol.postgresql.packet.command.query;
 
 import lombok.Getter;
-import org.apache.shardingsphere.db.protocol.postgresql.constant.PostgreSQLColumnType;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.shardingsphere.db.protocol.postgresql.constant.PostgreSQLArrayColumnType;
+import org.apache.shardingsphere.db.protocol.postgresql.constant.PostgreSQLBinaryColumnType;
+
+import java.sql.Types;
 
 /**
  * Column description for PostgreSQL.
  */
 @Getter
+@Slf4j
 public final class PostgreSQLColumnDescription {
     
     private final String columnName;
@@ -32,18 +37,18 @@ public final class PostgreSQLColumnDescription {
     
     private final int columnIndex;
     
-    private final int typeOID;
-    
     private final int columnLength;
+
+    private final int typeOID;
     
     private final int typeModifier = -1;
     
     private final int dataFormat = 0;
     
-    public PostgreSQLColumnDescription(final String columnName, final int columnIndex, final int columnType, final int columnLength) {
+    public PostgreSQLColumnDescription(final String columnName, final int columnIndex, final int columnType, final int columnLength, final String columnTypeName) {
         this.columnName = columnName;
         this.columnIndex = columnIndex;
-        this.typeOID = PostgreSQLColumnType.valueOfJDBCType(columnType).getValue();
         this.columnLength = columnLength;
+        typeOID = Types.ARRAY == columnType ? PostgreSQLArrayColumnType.getTypeOidByColumnTypeName(columnTypeName) : PostgreSQLBinaryColumnType.valueOfJDBCType(columnType).getValue();
     }
 }

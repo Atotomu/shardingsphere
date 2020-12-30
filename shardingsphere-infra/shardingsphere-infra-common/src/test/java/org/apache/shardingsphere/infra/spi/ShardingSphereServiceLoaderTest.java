@@ -17,9 +17,12 @@
 
 package org.apache.shardingsphere.infra.spi;
 
+import org.apache.shardingsphere.infra.spi.exception.ServiceLoaderInstantiationException;
 import org.apache.shardingsphere.infra.spi.fixture.TypedSPIFixture;
 import org.junit.Test;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -40,5 +43,28 @@ public final class ShardingSphereServiceLoaderTest {
         ShardingSphereServiceLoader.register(TypedSPIFixture.class);
         Collection collection = ShardingSphereServiceLoader.newServiceInstances(TypedSPIFixture.class);
         assertThat(collection.size(), is(1));
+    }
+    
+    @Test
+    public void assertRegisterTwice() {
+        ShardingSphereServiceLoader.register(TypedSPIFixture.class);
+        Collection<?> actualFirstRegister = ShardingSphereServiceLoader.newServiceInstances(TypedSPIFixture.class);
+        assertThat(actualFirstRegister.size(), is(1));
+        ShardingSphereServiceLoader.register(TypedSPIFixture.class);
+        Collection<?> actualSecondRegister = ShardingSphereServiceLoader.newServiceInstances(TypedSPIFixture.class);
+        assertThat(actualSecondRegister.size(), is(actualFirstRegister.size()));
+    }
+    
+    @Test
+    public void assertNewInstanceError() throws NoSuchMethodException, IllegalAccessException {
+        Method method = ShardingSphereServiceLoader.class.getDeclaredMethod("newServiceInstance", Class.class);
+        method.setAccessible(true);
+        Throwable targetException = null;
+        try {
+            method.invoke(null, TypedSPIFixture.class);
+        } catch (final InvocationTargetException ex) {
+            targetException = ex.getTargetException();
+        }
+        assertTrue("expected throw ServiceLoaderInstantiationException", targetException instanceof ServiceLoaderInstantiationException);
     }
 }

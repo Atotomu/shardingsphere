@@ -19,10 +19,6 @@
 # 
 # Here you can configure the rules for the proxy.
 # This example is configuration of encrypt rule.
-#   
-# If you want to use encrypt, please refer to this file; 
-# if you want to use sharding, please refer to the config-sharding.yaml.
-# if you want to use master-slave, please refer to the config-master_slave.yaml.
 # 
 ######################################################################################################
 #
@@ -39,23 +35,23 @@
 #
 #rules:
 #- !ENCRYPT
-#  encryptStrategies:
-#    aes_encrypt_strategy:
-#      type: aes
+#  encryptors:
+#    aes_encryptor:
+#      type: AES
 #      props:
-#        aes.key.value: 123456abc
-#    md5_encrypt_strategy:
-#      type: md5
+#        aes-key-value: 123456abc
+#    md5_encryptor:
+#      type: MD5
 #  tables:
 #    t_encrypt:
 #      columns:
 #        user_id:
 #          plainColumn: user_plain
 #          cipherColumn: user_cipher
-#          encryptStrategyName: aes_encrypt_strategy
+#          encryptorName: aes_encryptor
 #        order_id:
 #          cipherColumn: order_encrypt
-#          encryptStrategyName: md5_encrypt_strategy
+#          encryptorName: md5_encryptor
 
 ######################################################################################################
 #
@@ -76,20 +72,20 @@
 #
 #rules:
 #- !ENCRYPT
-#  encryptStrategies:
-#    aes_encrypt_strategy:
-#      type: aes
+#  encryptors:
+#    aes_encryptor:
+#      type: AES
 #      props:
-#        aes.key.value: 123456abc
-#    md5_encrypt_strategy:
-#      type: md5
+#        aes-key-value: 123456abc
+#    md5_encryptor:
+#      type: MD5
 #  tables:
 #    t_encrypt:
 #      columns:
 #        user_id:
 #          plainColumn: user_plain
 #          cipherColumn: user_cipher
-#          encryptStrategyName: aes_encrypt_strategy
+#          encryptorName: aes_encryptor
 #        order_id:
 #          cipherColumn: order_cipher
-#          encryptStrategyName: md5_encrypt_strategy
+#          encryptorName: md5_encryptor

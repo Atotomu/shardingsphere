@@ -9,7 +9,7 @@ You can report a bug, submit a new feature enhancement recommendation, or commit
  - If bug reported, please provide information below:
        - Details for reproduce bug step by step. Include SQL, configuration, expected results, actual results and tracing log.
        - Sharding and Operation System version.
-       - Source code to reproduce bug on github cna copy the link here.
+       - Source code that reproduce the bug on github, can be linked here.
        - Stack trace if exception thrown.
        - Screenshot and animated gif to help bug reproduce if necessary.
        - Screenshot for CPU, Memory, Network and IO stat if performance issue.
@@ -24,7 +24,7 @@ You can report a bug, submit a new feature enhancement recommendation, or commit
 
 ## Commit pull request
 
- - Please choose a interested issue, or create a new issue and then settle a correct label.
+ - Please choose an interested issue, or create a new issue and then settle a correct label.
  - Reply a deadline message to pickup this issue. 
  - Find a mentor in [Core developers list](https://shardingsphere.apache.org/community/en/team/), he will give you feedback for design and implements.
  - Fork to your github repo and begin to work.

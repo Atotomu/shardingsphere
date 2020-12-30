@@ -18,9 +18,9 @@
 package org.apache.shardingsphere.infra.yaml.swapper;
 
 import lombok.SneakyThrows;
-import org.apache.shardingsphere.infra.spi.ShardingSphereServiceLoader;
-import org.apache.shardingsphere.infra.spi.order.OrderedSPIRegistry;
 import org.apache.shardingsphere.infra.config.RuleConfiguration;
+import org.apache.shardingsphere.infra.spi.ShardingSphereServiceLoader;
+import org.apache.shardingsphere.infra.spi.ordered.OrderedSPIRegistry;
 import org.apache.shardingsphere.infra.yaml.config.YamlRuleConfiguration;
 
 import java.lang.reflect.ParameterizedType;
@@ -50,7 +50,7 @@ public final class YamlRuleConfigurationSwapperEngine {
     public Collection<YamlRuleConfiguration> swapToYamlConfigurations(final Collection<RuleConfiguration> ruleConfigurations) {
         Collection<YamlRuleConfiguration> result = new LinkedList<>();
         for (Entry<RuleConfiguration, YamlRuleConfigurationSwapper> entry : OrderedSPIRegistry.getRegisteredServices(ruleConfigurations, YamlRuleConfigurationSwapper.class).entrySet()) {
-            result.add((YamlRuleConfiguration) entry.getValue().swap(entry.getKey()));
+            result.add((YamlRuleConfiguration) entry.getValue().swapToYamlConfiguration(entry.getKey()));
         }
         return result;
     }
@@ -58,14 +58,14 @@ public final class YamlRuleConfigurationSwapperEngine {
     /**
      * Swap from YAML rule configurations to rule configurations.
      *
-     * @param springBootRuleConfigurations Spring boot rule configurations
+     * @param yamlRuleConfigs YAML rule configurations
      * @return rule configurations
      */
-    public Collection<RuleConfiguration> swapToRuleConfigurations(final Collection<YamlRuleConfiguration> springBootRuleConfigurations) {
+    public Collection<RuleConfiguration> swapToRuleConfigurations(final Collection<YamlRuleConfiguration> yamlRuleConfigs) {
         Collection<RuleConfiguration> result = new LinkedList<>();
-        Collection<Class<?>> ruleConfigurationTypes = springBootRuleConfigurations.stream().map(YamlRuleConfiguration::getRuleConfigurationType).collect(Collectors.toList());
+        Collection<Class<?>> ruleConfigurationTypes = yamlRuleConfigs.stream().map(YamlRuleConfiguration::getRuleConfigurationType).collect(Collectors.toList());
         for (Entry<Class<?>, YamlRuleConfigurationSwapper> entry : OrderedSPIRegistry.getRegisteredServicesByClass(ruleConfigurationTypes, YamlRuleConfigurationSwapper.class).entrySet()) {
-            result.addAll(swapToRuleConfigurations(springBootRuleConfigurations, entry.getKey(), entry.getValue()));
+            result.addAll(swapToRuleConfigurations(yamlRuleConfigs, entry.getKey(), entry.getValue()));
         }
         return result;
     }
@@ -76,7 +76,7 @@ public final class YamlRuleConfigurationSwapperEngine {
         Collection<RuleConfiguration> result = new LinkedList<>();
         for (YamlRuleConfiguration each : yamlRuleConfigurations) {
             if (each.getRuleConfigurationType().equals(ruleConfigurationType)) {
-                result.add((RuleConfiguration) swapper.swap(each));
+                result.add((RuleConfiguration) swapper.swapToObject(each));
             }
         }
         return result;
@@ -87,7 +87,7 @@ public final class YamlRuleConfigurationSwapperEngine {
      * 
      * @return YAML shortcuts
      */
-    @SneakyThrows
+    @SneakyThrows(ReflectiveOperationException.class)
     public static Map<String, Class<?>> getYamlShortcuts() {
         Map<String, Class<?>> result = new HashMap<>();
         for (YamlRuleConfigurationSwapper each : ShardingSphereServiceLoader.newServiceInstances(YamlRuleConfigurationSwapper.class)) {

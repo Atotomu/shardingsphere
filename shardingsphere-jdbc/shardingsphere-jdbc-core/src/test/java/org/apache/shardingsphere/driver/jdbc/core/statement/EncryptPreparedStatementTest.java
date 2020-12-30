@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.driver.jdbc.core.statement;
 
-import org.apache.shardingsphere.infra.database.type.DatabaseTypes;
+import org.apache.shardingsphere.infra.database.type.DatabaseTypeRegistry;
 import org.apache.shardingsphere.infra.config.properties.ConfigurationPropertyKey;
 import org.apache.shardingsphere.driver.common.base.AbstractShardingSphereDataSourceForEncryptTest;
 import org.junit.Test;
@@ -56,7 +56,7 @@ public final class EncryptPreparedStatementTest extends AbstractShardingSphereDa
     
     @Test
     public void assertSQLShow() {
-        assertTrue(getEncryptConnectionWithProps().getSchemaContexts().getProperties().<Boolean>getValue(ConfigurationPropertyKey.SQL_SHOW));
+        assertTrue(getEncryptConnectionWithProps().getMetaDataContexts().getProps().<Boolean>getValue(ConfigurationPropertyKey.SQL_SHOW));
     }
     
     @Test
@@ -161,7 +161,7 @@ public final class EncryptPreparedStatementTest extends AbstractShardingSphereDa
     @Test
     public void assertSelectWithExecuteWithProperties() throws SQLException {
         try (PreparedStatement statement = getEncryptConnection().prepareStatement(SELECT_ALL_SQL, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT)) {
-            Boolean result = statement.execute();
+            boolean result = statement.execute();
             assertTrue(result);
             assertThat(statement.getResultSetType(), is(ResultSet.TYPE_FORWARD_ONLY));
             assertThat(statement.getResultSetConcurrency(), is(ResultSet.CONCUR_READ_ONLY));
@@ -170,7 +170,7 @@ public final class EncryptPreparedStatementTest extends AbstractShardingSphereDa
     }
     
     private void assertResultSet(final int resultSetCount, final int id, final Object pwd, final Object assistPwd) throws SQLException {
-        try (Connection conn = getDatabaseTypeMap().get(DatabaseTypes.getActualDatabaseType("H2")).get("encrypt").getConnection();
+        try (Connection conn = getDatabaseTypeMap().get(DatabaseTypeRegistry.getActualDatabaseType("H2")).get("encrypt").getConnection();
              Statement stmt = conn.createStatement()) {
             ResultSet resultSet = stmt.executeQuery(SELECT_ALL_SQL);
             int count = 1;

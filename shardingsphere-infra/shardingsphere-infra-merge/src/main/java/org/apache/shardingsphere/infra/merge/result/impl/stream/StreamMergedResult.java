@@ -18,7 +18,7 @@
 package org.apache.shardingsphere.infra.merge.result.impl.stream;
 
 import lombok.Setter;
-import org.apache.shardingsphere.infra.executor.sql.QueryResult;
+import org.apache.shardingsphere.infra.executor.sql.execute.result.query.QueryResult;
 import org.apache.shardingsphere.infra.merge.result.MergedResult;
 
 import java.io.InputStream;
@@ -56,7 +56,6 @@ public abstract class StreamMergedResult implements MergedResult {
         return result;
     }
     
-    @SuppressWarnings("deprecation")
     @Override
     public final InputStream getInputStream(final int columnIndex, final String type) throws SQLException {
         InputStream result = getCurrentQueryResult().getInputStream(columnIndex, type);

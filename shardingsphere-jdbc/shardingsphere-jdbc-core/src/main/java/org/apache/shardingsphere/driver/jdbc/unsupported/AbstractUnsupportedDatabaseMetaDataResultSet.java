@@ -19,8 +19,7 @@ package org.apache.shardingsphere.driver.jdbc.unsupported;
 
 import java.io.InputStream;
 import java.io.Reader;
-import java.math.BigDecimal;
-import java.net.URL;
+import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
@@ -37,26 +36,6 @@ import java.util.Calendar;
  * Unsupported Database meta data result set.
  */
 public abstract class AbstractUnsupportedDatabaseMetaDataResultSet extends AbstractUnsupportedOperationResultSet {
-    
-    @Override
-    public final BigDecimal getBigDecimal(final int columnIndex, final int scale) throws SQLException {
-        throw new SQLFeatureNotSupportedException("getBigDecimal");
-    }
-    
-    @Override
-    public final BigDecimal getBigDecimal(final String columnLabel, final int scale) throws SQLException {
-        throw new SQLFeatureNotSupportedException("getBigDecimal");
-    }
-    
-    @Override
-    public final BigDecimal getBigDecimal(final int columnIndex) throws SQLException {
-        throw new SQLFeatureNotSupportedException("getBigDecimal");
-    }
-    
-    @Override
-    public final BigDecimal getBigDecimal(final String columnLabel) throws SQLException {
-        throw new SQLFeatureNotSupportedException("getBigDecimal");
-    }
     
     @Override
     public final InputStream getAsciiStream(final int columnIndex) throws SQLException {
@@ -109,28 +88,18 @@ public abstract class AbstractUnsupportedDatabaseMetaDataResultSet extends Abstr
     }
     
     @Override
-    public final void setFetchDirection(final int direction) throws SQLException {
-        throw new SQLFeatureNotSupportedException("setFetchDirection");
-    }
-    
-    @Override
-    public final int getFetchDirection() throws SQLException {
-        throw new SQLFeatureNotSupportedException("getFetchDirection");
-    }
-    
-    @Override
-    public final void setFetchSize(final int rows) throws SQLException {
-        throw new SQLFeatureNotSupportedException("setFetchSize");
-    }
-    
-    @Override
-    public final int getFetchSize() throws SQLException {
-        throw new SQLFeatureNotSupportedException("getFetchSize");
-    }
-    
-    @Override
     public final Statement getStatement() throws SQLException {
         throw new SQLFeatureNotSupportedException("getStatement");
+    }
+    
+    @Override
+    public final Array getArray(final int columnIndex) throws SQLException {
+        throw new SQLFeatureNotSupportedException("getArray");
+    }
+    
+    @Override
+    public final Array getArray(final String columnLabel) throws SQLException {
+        throw new SQLFeatureNotSupportedException("getArray");
     }
     
     @Override
@@ -181,16 +150,6 @@ public abstract class AbstractUnsupportedDatabaseMetaDataResultSet extends Abstr
     @Override
     public final Timestamp getTimestamp(final String columnLabel, final Calendar cal) throws SQLException {
         throw new SQLFeatureNotSupportedException("getTime(String columnLabel, Calendar cal)");
-    }
-    
-    @Override
-    public final URL getURL(final int columnIndex) throws SQLException {
-        throw new SQLFeatureNotSupportedException("getURL");
-    }
-    
-    @Override
-    public final URL getURL(final String columnLabel) throws SQLException {
-        throw new SQLFeatureNotSupportedException("getURL");
     }
     
     @Override

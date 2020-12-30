@@ -39,11 +39,12 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 public abstract class AbstractShardingSphereDataSourceForEncryptTest extends AbstractSQLTest {
     
-    private static ShardingSphereDataSource encryptDataSource;
+    private static ShardingSphereDataSource dataSource;
     
     private static ShardingSphereDataSource encryptDataSourceWithProps;
     
@@ -53,12 +54,12 @@ public abstract class AbstractShardingSphereDataSourceForEncryptTest extends Abs
     
     @BeforeClass
     public static void initEncryptDataSource() throws SQLException, IOException {
-        if (null != encryptDataSource && null != encryptDataSourceWithProps) {
+        if (null != dataSource && null != encryptDataSourceWithProps) {
             return;
         }
         File encryptFile = getFile(ENCRYPT_CONFIG_FILE);
         DataSource dataSource = getDataSources().values().iterator().next();
-        encryptDataSource = (ShardingSphereDataSource) createDataSourceWithEmptyProps(dataSource, encryptFile);
+        AbstractShardingSphereDataSourceForEncryptTest.dataSource = (ShardingSphereDataSource) createDataSourceWithEmptyProps(dataSource, encryptFile);
         encryptDataSourceWithProps = (ShardingSphereDataSource) YamlShardingSphereDataSourceFactory.createDataSource(dataSource, encryptFile);
     }
     
@@ -78,15 +79,15 @@ public abstract class AbstractShardingSphereDataSourceForEncryptTest extends Abs
     
     @Before
     public void initTable() {
-        try (ShardingSphereConnection connection = encryptDataSource.getConnection()) {
-            RunScript.execute(connection, new InputStreamReader(AbstractSQLTest.class.getClassLoader().getResourceAsStream("encrypt_data.sql")));
+        try (ShardingSphereConnection connection = dataSource.getConnection()) {
+            RunScript.execute(connection, new InputStreamReader(Objects.requireNonNull(AbstractSQLTest.class.getClassLoader().getResourceAsStream("encrypt_data.sql"))));
         } catch (final SQLException ex) {
-            ex.printStackTrace();
+            throw new RuntimeException(ex);
         }
     }
     
     protected final ShardingSphereConnection getEncryptConnection() {
-        return encryptDataSource.getConnection();
+        return dataSource.getConnection();
     }
     
     protected final ShardingSphereConnection getEncryptConnectionWithProps() {
@@ -95,11 +96,11 @@ public abstract class AbstractShardingSphereDataSourceForEncryptTest extends Abs
     
     @AfterClass
     public static void close() throws Exception {
-        if (null == encryptDataSource) {
+        if (null == dataSource) {
             return;
         }
-        encryptDataSource.close();
-        encryptDataSource = null;
+        dataSource.close();
+        dataSource = null;
         if (null == encryptDataSourceWithProps) {
             return;
         }

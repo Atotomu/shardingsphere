@@ -28,16 +28,17 @@ import org.apache.shardingsphere.shadow.yaml.config.YamlShadowRuleConfiguration;
 public final class ShadowRuleConfigurationYamlSwapper implements YamlRuleConfigurationSwapper<YamlShadowRuleConfiguration, ShadowRuleConfiguration> {
     
     @Override
-    public YamlShadowRuleConfiguration swap(final ShadowRuleConfiguration data) {
+    public YamlShadowRuleConfiguration swapToYamlConfiguration(final ShadowRuleConfiguration data) {
         YamlShadowRuleConfiguration result = new YamlShadowRuleConfiguration();
         result.setColumn(data.getColumn());
-        result.setShadowMappings(data.getShadowMappings());
+        result.setSourceDataSourceNames(data.getSourceDataSourceNames());
+        result.setShadowDataSourceNames(data.getShadowDataSourceNames());
         return result;
     }
     
     @Override
-    public ShadowRuleConfiguration swap(final YamlShadowRuleConfiguration yamlConfiguration) {
-        return new ShadowRuleConfiguration(yamlConfiguration.getColumn(), yamlConfiguration.getShadowMappings());
+    public ShadowRuleConfiguration swapToObject(final YamlShadowRuleConfiguration yamlConfig) {
+        return new ShadowRuleConfiguration(yamlConfig.getColumn(), yamlConfig.getSourceDataSourceNames(), yamlConfig.getShadowDataSourceNames());
     }
     
     @Override

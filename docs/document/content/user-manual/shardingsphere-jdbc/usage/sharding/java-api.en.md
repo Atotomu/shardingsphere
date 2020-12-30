@@ -44,20 +44,10 @@ dataSourceMap.put("ds1", dataSource2);
 ShardingTableRuleConfiguration orderTableRuleConfig = new ShardingTableRuleConfiguration("t_order", "ds${0..1}.t_order${0..1}");
 
 // Configure database sharding strategy
-StandardShardingAlgorithm dbShardingAlgorithm = new InlineShardingAlgorithm();
-Properties dbProps = new Properties();
-dbProps.setProperty(InlineShardingAlgorithm.ALGORITHM_EXPRESSION, "ds${user_id % 2}");
-dbShardingAlgorithm.setProperties(dbProps);
-StandardShardingStrategyConfiguration dbShardingStrategyConfig = new StandardShardingStrategyConfiguration("user_id", dbShardingAlgorithm);
-orderTableRuleConfig.setDatabaseShardingStrategy(dbShardingStrategyConfig);
+orderTableRuleConfig.setDatabaseShardingStrategy(new StandardShardingStrategyConfiguration("user_id", "dbShardingAlgorithm"));
 
 // Configure table sharding strategy
-StandardShardingAlgorithm tableShardingAlgorithm = new InlineShardingAlgorithm();
-Properties tableProps = new Properties();
-tableProps.setProperty(InlineShardingAlgorithm.ALGORITHM_EXPRESSION, "t_order${order_id % 2}");
-tableShardingAlgorithm.setProperties(tableProps);
-StandardShardingStrategyConfiguration tableShardingStrategy = new StandardShardingStrategyConfiguration("order_id", tableShardingAlgorithm);
-orderTableRuleConfig.setTableShardingStrategy(tableShardingStrategy);
+orderTableRuleConfig.setTableShardingStrategy(new StandardShardingStrategyConfiguration("order_id", "tableShardingAlgorithm"));
 
 // Omit t_order_item table rule configuration ...
 // ...
@@ -66,8 +56,18 @@ orderTableRuleConfig.setTableShardingStrategy(tableShardingStrategy);
 ShardingRuleConfiguration shardingRuleConfig = new ShardingRuleConfiguration();
 shardingRuleConfig.getTables().add(orderTableRuleConfig);
 
+// Configure database sharding algorithm
+Properties dbShardingAlgorithmrProps = new Properties();
+dbShardingAlgorithmrProps.setProperty("algorithm-expression", "ds${user_id % 2}");
+shardingRuleConfig.getShardingAlgorithms().put("dbShardingAlgorithm", new ShardingSphereAlgorithmConfiguration("INLINE", dbShardingAlgorithmrProps));
+
+// Configure table sharding algorithm
+Properties tableShardingAlgorithmrProps = new Properties();
+tableShardingAlgorithmrProps.setProperty("algorithm-expression", "t_order${order_id % 2}");
+shardingRuleConfig.getShardingAlgorithms().put("tableShardingAlgorithm", new ShardingSphereAlgorithmConfiguration("INLINE", tableShardingAlgorithmrProps));
+
 // Create ShardingSphereDataSource
-DataSource dataSource = ShardingSphereDataSourceFactory.createDataSource(dataSourceMap, Collections.singleton((shardingRuleConfig), new Properties());
+DataSource dataSource = ShardingSphereDataSourceFactory.createDataSource(dataSourceMap, Collections.singleton(shardingRuleConfig), new Properties());
 ```
 
 ## Use ShardingSphereDataSource
@@ -78,14 +78,14 @@ Developer can choose to use native JDBC or ORM frameworks such as JPA or MyBatis
 Take native JDBC usage as an example:
 
 ```java
-DataSource dataSource = ShardingSphereDataSourceFactory.createDataSource(dataSourceMap, Collections.singleton((shardingRuleConfig), new Properties());
+DataSource dataSource = ShardingSphereDataSourceFactory.createDataSource(dataSourceMap, Collections.singleton(shardingRuleConfig), new Properties());
 String sql = "SELECT i.* FROM t_order o JOIN t_order_item i ON o.order_id=i.order_id WHERE o.user_id=? AND o.order_id=?";
 try (
         Connection conn = dataSource.getConnection();
         PreparedStatement ps = conn.prepareStatement(sql)) {
     ps.setInt(1, 10);
     ps.setInt(2, 1000);
-    try (ResultSet rs = preparedStatement.executeQuery()) {
+    try (ResultSet rs = ps.executeQuery()) {
         while(rs.next()) {
             // ...
         }

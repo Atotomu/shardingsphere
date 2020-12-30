@@ -39,7 +39,7 @@ public final class MySQLNullBitmap {
     }
     
     public MySQLNullBitmap(final int columnNumbers, final MySQLPacketPayload payload) {
-        this.offset = 0;
+        offset = 0;
         nullBitmap = new int[calculateLength(columnNumbers, 0)];
         fillBitmap(payload);
     }
@@ -70,7 +70,7 @@ public final class MySQLNullBitmap {
      * @param index column index
      */
     public void setNullBit(final int index) {
-        nullBitmap[getBytePosition(index)] = 1 << getBitPosition(index);
+        nullBitmap[getBytePosition(index)] |= 1 << getBitPosition(index);
     }
     
     private int getBytePosition(final int index) {

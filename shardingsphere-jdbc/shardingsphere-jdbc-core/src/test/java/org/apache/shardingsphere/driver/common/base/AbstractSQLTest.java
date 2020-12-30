@@ -18,12 +18,10 @@
 package org.apache.shardingsphere.driver.common.base;
 
 import com.google.common.collect.Sets;
-import lombok.AccessLevel;
-import lombok.Getter;
 import org.apache.commons.dbcp2.BasicDataSource;
-import org.apache.shardingsphere.infra.database.type.DatabaseTypes;
 import org.apache.shardingsphere.driver.common.env.DatabaseEnvironment;
 import org.apache.shardingsphere.infra.database.type.DatabaseType;
+import org.apache.shardingsphere.infra.database.type.DatabaseTypeRegistry;
 import org.h2.tools.RunScript;
 import org.junit.BeforeClass;
 
@@ -36,16 +34,16 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public abstract class AbstractSQLTest {
     
-    private static final List<String> DB_NAMES = Arrays.asList("jdbc_0", "jdbc_1", "encrypt", "test_ds_master", "test_ds_slave");
+    private static final List<String> DB_NAMES = Arrays.asList("jdbc_0", "jdbc_1", "encrypt", "test_primary_ds", "test_replica_ds");
     
-    private static final Set<DatabaseType> DATABASE_TYPES = Sets.newHashSet(DatabaseTypes.getActualDatabaseType("H2"));
+    private static final Set<DatabaseType> DATABASE_TYPES = Sets.newHashSet(DatabaseTypeRegistry.getActualDatabaseType("H2"));
     
-    @Getter(AccessLevel.PROTECTED)
-    private static Map<DatabaseType, Map<String, DataSource>> databaseTypeMap = new HashMap<>();
+    private static final Map<DatabaseType, Map<String, DataSource>> DATABASE_TYPE_MAP = new HashMap<>();
     
     @BeforeClass
     public static synchronized void initDataSource() {
@@ -61,8 +59,8 @@ public abstract class AbstractSQLTest {
     }
     
     private static void createDataSources(final String dbName, final DatabaseType databaseType) {
-        databaseTypeMap.computeIfAbsent(databaseType, k -> new LinkedHashMap<>()).put(dbName, buildDataSource(dbName, databaseType));
-        createSchema(dbName, databaseType);
+        DATABASE_TYPE_MAP.computeIfAbsent(databaseType, key -> new LinkedHashMap<>()).put(dbName, buildDataSource(dbName, databaseType));
+        buildSchema(dbName, databaseType);
     }
     
     private static BasicDataSource buildDataSource(final String dbName, final DatabaseType databaseType) {
@@ -76,13 +74,17 @@ public abstract class AbstractSQLTest {
         return result;
     }
     
-    private static void createSchema(final String dbName, final DatabaseType databaseType) {
+    private static void buildSchema(final String dbName, final DatabaseType databaseType) {
         try {
-            Connection conn = databaseTypeMap.get(databaseType).get(dbName).getConnection();
-            RunScript.execute(conn, new InputStreamReader(AbstractSQLTest.class.getClassLoader().getResourceAsStream("jdbc_init.sql")));
+            Connection conn = DATABASE_TYPE_MAP.get(databaseType).get(dbName).getConnection();
+            RunScript.execute(conn, new InputStreamReader(Objects.requireNonNull(AbstractSQLTest.class.getClassLoader().getResourceAsStream("jdbc_init.sql"))));
             conn.close();
         } catch (final SQLException ex) {
-            ex.printStackTrace();
+            throw new RuntimeException(ex);
         }
+    }
+    
+    protected static Map<DatabaseType, Map<String, DataSource>> getDatabaseTypeMap() {
+        return DATABASE_TYPE_MAP;
     }
 }

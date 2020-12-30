@@ -17,22 +17,9 @@
 
 package org.apache.shardingsphere.driver.fixture;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.apache.shardingsphere.encrypt.strategy.spi.EncryptAlgorithm;
+import org.apache.shardingsphere.encrypt.spi.EncryptAlgorithm;
 
-import java.util.Properties;
-
-@Getter
-@Setter
 public final class TestEncryptAlgorithm implements EncryptAlgorithm {
-    
-    private Properties properties = new Properties();
-    
-    @Override
-    public String getType() {
-        return "test";
-    }
     
     @Override
     public void init() {
@@ -46,5 +33,10 @@ public final class TestEncryptAlgorithm implements EncryptAlgorithm {
     @Override
     public Object decrypt(final String ciphertext) {
         return "decryptValue";
+    }
+    
+    @Override
+    public String getType() {
+        return "test";
     }
 }

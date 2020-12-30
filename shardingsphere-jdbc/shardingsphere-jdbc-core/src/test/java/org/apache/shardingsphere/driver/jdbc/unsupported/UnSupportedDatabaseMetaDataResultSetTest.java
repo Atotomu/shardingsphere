@@ -42,26 +42,6 @@ public final class UnSupportedDatabaseMetaDataResultSetTest {
     }
     
     @Test(expected = SQLFeatureNotSupportedException.class)
-    public void assertGetBigDecimalWithIndex() throws SQLException {
-        databaseMetaDataResultSet.getBigDecimal(1);
-    }
-    
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void assertGetBigDecimalWithLabel() throws SQLException {
-        databaseMetaDataResultSet.getBigDecimal("");
-    }
-    
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void assertGetBigDecimalWithIndexAndScale() throws SQLException {
-        databaseMetaDataResultSet.getBigDecimal(1, 1);
-    }
-    
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void assertGetBigDecimalWithLabelAndScale() throws SQLException {
-        databaseMetaDataResultSet.getBigDecimal("", 1);
-    }
-    
-    @Test(expected = SQLFeatureNotSupportedException.class)
     public void assertGetAsciiStreamWithIndex() throws SQLException {
         databaseMetaDataResultSet.getAsciiStream(1);
     }
@@ -109,26 +89,6 @@ public final class UnSupportedDatabaseMetaDataResultSetTest {
     @Test(expected = SQLFeatureNotSupportedException.class)
     public void assertGetCharacterStreamWithLabel() throws SQLException {
         databaseMetaDataResultSet.getCharacterStream("");
-    }
-    
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void assertSetFetchDirection() throws SQLException {
-        databaseMetaDataResultSet.setFetchDirection(ResultSet.FETCH_FORWARD);
-    }
-    
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void assertGetFetchDirection() throws SQLException {
-        databaseMetaDataResultSet.getFetchDirection();
-    }
-    
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void assertSetFetchSize() throws SQLException {
-        databaseMetaDataResultSet.setFetchSize(1);
-    }
-    
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void assertGetFetchSize() throws SQLException {
-        databaseMetaDataResultSet.getFetchSize();
     }
     
     @Test(expected = SQLFeatureNotSupportedException.class)
@@ -184,16 +144,6 @@ public final class UnSupportedDatabaseMetaDataResultSetTest {
     @Test(expected = SQLFeatureNotSupportedException.class)
     public void assertGetTimestampWithLabelAndCalendar() throws SQLException {
         databaseMetaDataResultSet.getTimestamp("", null);
-    }
-    
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void assertGetURLWithIndex() throws SQLException {
-        databaseMetaDataResultSet.getURL(1);
-    }
-    
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void assertGetURLWithLabel() throws SQLException {
-        databaseMetaDataResultSet.getURL("");
     }
     
     @Test(expected = SQLFeatureNotSupportedException.class)

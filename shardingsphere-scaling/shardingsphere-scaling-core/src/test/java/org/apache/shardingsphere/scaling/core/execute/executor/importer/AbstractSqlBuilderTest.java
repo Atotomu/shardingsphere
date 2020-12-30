@@ -17,59 +17,66 @@
 
 package org.apache.shardingsphere.scaling.core.execute.executor.importer;
 
-import lombok.SneakyThrows;
-import org.apache.shardingsphere.scaling.core.job.position.NopLogPosition;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.apache.shardingsphere.scaling.core.execute.executor.record.Column;
 import org.apache.shardingsphere.scaling.core.execute.executor.record.DataRecord;
-import org.junit.Before;
+import org.apache.shardingsphere.scaling.core.execute.executor.record.RecordUtil;
+import org.apache.shardingsphere.scaling.core.execute.executor.sqlbuilder.ScalingSQLBuilder;
+import org.apache.shardingsphere.scaling.core.fixture.FixtureScalingSQLBuilder;
+import org.apache.shardingsphere.scaling.core.job.position.PlaceholderPosition;
 import org.junit.Test;
+
+import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-public class AbstractSqlBuilderTest {
+public final class AbstractSqlBuilderTest {
     
-    private AbstractSqlBuilder sqlBuilder;
+    private final ScalingSQLBuilder scalingSqlBuilder = new FixtureScalingSQLBuilder(Maps.newHashMap());
     
-    @Before
-    @SneakyThrows
-    public void setUp() {
-        sqlBuilder = new AbstractSqlBuilder() {
-            
-            @Override
-            protected String getLeftIdentifierQuoteString() {
-                return "`";
-            }
-    
-            @Override
-            protected String getRightIdentifierQuoteString() {
-                return "`";
-            }
-        };
+    @Test
+    public void assertBuildInsertSQL() {
+        String actual = scalingSqlBuilder.buildInsertSQL(mockDataRecord("t1"));
+        assertThat(actual, is("INSERT INTO `t1`(`id`,`sc`,`c1`,`c2`,`c3`) VALUES(?,?,?,?,?)"));
     }
     
     @Test
-    public void assertBuildInsertSql() {
-        String actual = sqlBuilder.buildInsertSQL(mockDataRecord("t1"));
-        assertThat(actual, is("INSERT INTO `t1`(`id`,`c1`,`c2`,`c3`) VALUES(?,?,?,?)"));
-    }
-    
-    @Test
-    public void assertBuildUpdateSql() {
-        String actual = sqlBuilder.buildUpdateSQL(mockDataRecord("t2"));
+    public void assertBuildUpdateSQLWithPrimaryKey() {
+        String actual = scalingSqlBuilder.buildUpdateSQL(mockDataRecord("t2"), RecordUtil.extractPrimaryColumns(mockDataRecord("t2")));
         assertThat(actual, is("UPDATE `t2` SET `c1` = ?,`c2` = ?,`c3` = ? WHERE `id` = ?"));
     }
     
     @Test
-    public void assertBuildDeleteSql() {
-        String actual = sqlBuilder.buildDeleteSQL(mockDataRecord("t3"));
+    public void assertBuildUpdateSQLWithShardingColumns() {
+        DataRecord dataRecord = mockDataRecord("t2");
+        String actual = scalingSqlBuilder.buildUpdateSQL(dataRecord, mockConditionColumns(dataRecord));
+        assertThat(actual, is("UPDATE `t2` SET `c1` = ?,`c2` = ?,`c3` = ? WHERE `id` = ? and `sc` = ?"));
+    }
+    
+    @Test
+    public void assertBuildDeleteSQLWithPrimaryKey() {
+        String actual = scalingSqlBuilder.buildDeleteSQL(mockDataRecord("t3"), RecordUtil.extractPrimaryColumns(mockDataRecord("t3")));
         assertThat(actual, is("DELETE FROM `t3` WHERE `id` = ?"));
     }
     
+    @Test
+    public void assertBuildDeleteSQLWithConditionColumns() {
+        DataRecord dataRecord = mockDataRecord("t3");
+        String actual = scalingSqlBuilder.buildDeleteSQL(dataRecord, mockConditionColumns(dataRecord));
+        assertThat(actual, is("DELETE FROM `t3` WHERE `id` = ? and `sc` = ?"));
+    }
+    
+    private Collection<Column> mockConditionColumns(final DataRecord dataRecord) {
+        return RecordUtil.extractConditionColumns(dataRecord, Sets.newHashSet("sc"));
+    }
+    
     private DataRecord mockDataRecord(final String tableName) {
-        DataRecord result = new DataRecord(new NopLogPosition(), 4);
+        DataRecord result = new DataRecord(new PlaceholderPosition(), 4);
         result.setTableName(tableName);
         result.addColumn(new Column("id", "", false, true));
+        result.addColumn(new Column("sc", "", false, false));
         result.addColumn(new Column("c1", "", true, false));
         result.addColumn(new Column("c2", "", true, false));
         result.addColumn(new Column("c3", "", true, false));

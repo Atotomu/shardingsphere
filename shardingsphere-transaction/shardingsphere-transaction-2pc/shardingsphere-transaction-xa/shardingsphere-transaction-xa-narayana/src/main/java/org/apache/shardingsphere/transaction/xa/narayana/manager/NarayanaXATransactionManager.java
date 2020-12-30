@@ -21,11 +21,15 @@ import com.arjuna.ats.arjuna.recovery.RecoveryManager;
 import com.arjuna.ats.internal.jta.recovery.arjunacore.XARecoveryModule;
 import com.arjuna.ats.jbossatx.jta.RecoveryManagerService;
 import com.arjuna.ats.jta.common.jtaPropertyManager;
+import java.util.Objects;
 import lombok.SneakyThrows;
+import org.apache.shardingsphere.transaction.core.XATransactionManagerType;
 import org.apache.shardingsphere.transaction.xa.spi.SingleXAResource;
 import org.apache.shardingsphere.transaction.xa.spi.XATransactionManager;
 
 import javax.sql.XADataSource;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
 /**
@@ -33,43 +37,55 @@ import javax.transaction.TransactionManager;
  */
 public final class NarayanaXATransactionManager implements XATransactionManager {
     
-    private static final TransactionManager TRANSACTION_MANAGER = jtaPropertyManager.getJTAEnvironmentBean().getTransactionManager();
+    private TransactionManager transactionManager;
     
-    private static final XARecoveryModule XA_RECOVERY_MODULE = XARecoveryModule.getRegisteredXARecoveryModule();
+    private XARecoveryModule xaRecoveryModule;
     
-    private static final RecoveryManagerService RECOVERY_MANAGER_SERVICE = new RecoveryManagerService();
+    private RecoveryManagerService recoveryManagerService;
     
     @Override
     public void init() {
+        transactionManager = jtaPropertyManager.getJTAEnvironmentBean().getTransactionManager();
+        xaRecoveryModule = XARecoveryModule.getRegisteredXARecoveryModule();
+        recoveryManagerService = new RecoveryManagerService();
         RecoveryManager.delayRecoveryManagerThread();
-        RECOVERY_MANAGER_SERVICE.create();
-        RECOVERY_MANAGER_SERVICE.start();
+        recoveryManagerService.create();
+        recoveryManagerService.start();
     }
     
     @Override
     public void registerRecoveryResource(final String dataSourceName, final XADataSource xaDataSource) {
-        XA_RECOVERY_MODULE.addXAResourceRecoveryHelper(new DataSourceXAResourceRecoveryHelper(xaDataSource));
+        if (Objects.nonNull(xaRecoveryModule)) {
+            xaRecoveryModule.addXAResourceRecoveryHelper(new DataSourceXAResourceRecoveryHelper(xaDataSource));
+        }
     }
     
     @Override
     public void removeRecoveryResource(final String dataSourceName, final XADataSource xaDataSource) {
-        XA_RECOVERY_MODULE.removeXAResourceRecoveryHelper(new DataSourceXAResourceRecoveryHelper(xaDataSource));
+        if (Objects.nonNull(xaRecoveryModule)) {
+            xaRecoveryModule.removeXAResourceRecoveryHelper(new DataSourceXAResourceRecoveryHelper(xaDataSource));
+        }
     }
     
-    @SneakyThrows
+    @SneakyThrows({SystemException.class, RollbackException.class})
     @Override
     public void enlistResource(final SingleXAResource singleXAResource) {
-        TRANSACTION_MANAGER.getTransaction().enlistResource(singleXAResource.getDelegate());
+        transactionManager.getTransaction().enlistResource(singleXAResource.getDelegate());
     }
     
     @Override
     public TransactionManager getTransactionManager() {
-        return TRANSACTION_MANAGER;
+        return transactionManager;
     }
     
     @Override
     public void close() throws Exception {
-        RECOVERY_MANAGER_SERVICE.stop();
-        RECOVERY_MANAGER_SERVICE.destroy();
+        recoveryManagerService.stop();
+        recoveryManagerService.destroy();
+    }
+    
+    @Override
+    public String getType() {
+        return XATransactionManagerType.NARAYANA.getType();
     }
 }

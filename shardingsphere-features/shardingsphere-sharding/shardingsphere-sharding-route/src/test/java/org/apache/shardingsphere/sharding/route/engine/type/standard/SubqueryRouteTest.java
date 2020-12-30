@@ -18,16 +18,14 @@
 package org.apache.shardingsphere.sharding.route.engine.type.standard;
 
 import org.apache.shardingsphere.infra.hint.HintManager;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.LinkedList;
 import java.util.List;
 
-@Ignore("Can not support subquery at current")
 public final class SubqueryRouteTest extends AbstractSQLRouteTest {
     
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void assertOneTableError() {
         String sql = "select (select max(id) from t_order b where b.user_id =? ) from t_order a where user_id = ? ";
         List<Object> parameters = new LinkedList<>();
@@ -63,7 +61,7 @@ public final class SubqueryRouteTest extends AbstractSQLRouteTest {
         assertRoute(sql, parameters);
     }
     
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void assertBindingTableWithDifferentValue() {
         String sql = "select (select max(id) from t_order_item b where b.user_id = ? ) from t_order a where user_id = ? ";
         List<Object> parameters = new LinkedList<>();
@@ -93,7 +91,7 @@ public final class SubqueryRouteTest extends AbstractSQLRouteTest {
         assertRoute(sql, parameters);
     }
     
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void assertSubqueryInSubqueryError() {
         List<Object> parameters = new LinkedList<>();
         parameters.add(11);
@@ -117,7 +115,7 @@ public final class SubqueryRouteTest extends AbstractSQLRouteTest {
         assertRoute(sql, parameters);
     }
     
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void assertSubqueryInFromError() {
         String sql = "select status from t_order b join (select user_id,status from t_order b where b.user_id =?) c on b.user_id = c.user_id where b.user_id =? ";
         List<Object> parameters = new LinkedList<>();
@@ -151,16 +149,6 @@ public final class SubqueryRouteTest extends AbstractSQLRouteTest {
         assertRoute(sql, parameters);
     }
     
-    @Test(expected = IllegalStateException.class)
-    public void assertSubqueryWithoutHint() {
-        List<Object> parameters = new LinkedList<>();
-        parameters.add(1);
-        parameters.add(2);
-        parameters.add(5);
-        String sql = "select count(*) from t_hint_test where user_id = (select t_hint_test from t_hint_test where user_id in (?,?,?)) ";
-        assertRoute(sql, parameters);
-    }
-    
     @Test
     public void assertSubqueryWithHint() {
         HintManager hintManager = HintManager.getInstance();
@@ -173,5 +161,13 @@ public final class SubqueryRouteTest extends AbstractSQLRouteTest {
         String sql = "select count(*) from t_hint_test where user_id = (select t_hint_test from t_hint_test where user_id in (?,?,?)) ";
         assertRoute(sql, parameters);
         hintManager.close();
+    }
+    
+    @Test
+    public void assertSubqueryWithOneInstance() {
+        String sql = "select count(*) from t_order where user_id =?";
+        List<Object> parameters = new LinkedList<>();
+        parameters.add(1);
+        assertRoute(sql, parameters);
     }
 }

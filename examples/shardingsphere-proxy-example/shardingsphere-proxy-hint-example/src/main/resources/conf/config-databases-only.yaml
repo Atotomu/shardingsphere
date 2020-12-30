@@ -17,21 +17,27 @@
 
 schemaName: databases_only
 
-dataSourceCommon:
-  username: root
-  password:
-  connectionTimeoutMilliseconds: 30000
-  idleTimeoutMilliseconds: 60000
-  maxLifetimeMilliseconds: 1800000
-  maxPoolSize: 50
-  minPoolSize: 1
-  maintenanceIntervalMilliseconds: 30000
-
 dataSources:
   ds_0:
     url: jdbc:mysql://localhost:3306/demo_ds_0
+    username: root
+    password:
+    connectionTimeoutMilliseconds: 30000
+    idleTimeoutMilliseconds: 60000
+    maxLifetimeMilliseconds: 1800000
+    maxPoolSize: 50
+    minPoolSize: 1
+    maintenanceIntervalMilliseconds: 30000
   ds_1:
     url: jdbc:mysql://localhost:3306/demo_ds_1
+    username: root
+    password:
+    connectionTimeoutMilliseconds: 30000
+    idleTimeoutMilliseconds: 60000
+    maxLifetimeMilliseconds: 1800000
+    maxPoolSize: 50
+    minPoolSize: 1
+    maintenanceIntervalMilliseconds: 30000
 
 rules:
 - !SHARDING
@@ -47,7 +53,10 @@ rules:
 
   defaultDatabaseStrategy:
     hint:
-      shardingAlgorithm:
-        type: HINT_TEST
+      shardingAlgorithmName: hint_test
   defaultTableStrategy:
     none:
+  
+  shardingAlgorithms:
+    hint_test:
+      type: HINT_TEST

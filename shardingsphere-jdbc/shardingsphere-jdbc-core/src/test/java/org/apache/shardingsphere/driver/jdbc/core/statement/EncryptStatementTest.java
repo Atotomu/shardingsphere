@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.driver.jdbc.core.statement;
 
-import org.apache.shardingsphere.infra.database.type.DatabaseTypes;
+import org.apache.shardingsphere.infra.database.type.DatabaseTypeRegistry;
 import org.apache.shardingsphere.infra.config.properties.ConfigurationPropertyKey;
 import org.apache.shardingsphere.driver.common.base.AbstractShardingSphereDataSourceForEncryptTest;
 import org.junit.Test;
@@ -59,7 +59,7 @@ public final class EncryptStatementTest extends AbstractShardingSphereDataSource
     
     @Test
     public void assertSQLShow() {
-        assertTrue(getEncryptConnectionWithProps().getSchemaContexts().getProperties().<Boolean>getValue(ConfigurationPropertyKey.SQL_SHOW));
+        assertTrue(getEncryptConnectionWithProps().getMetaDataContexts().getProps().<Boolean>getValue(ConfigurationPropertyKey.SQL_SHOW));
     }
     
     @Test
@@ -117,7 +117,7 @@ public final class EncryptStatementTest extends AbstractShardingSphereDataSource
     public void assertSelectWithExecuteWithProperties() throws SQLException {
         try (Statement statement = getEncryptConnection().createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT)) {
             int[] columnIndexes = {1, 2};
-            Boolean result = statement.execute(SELECT_SQL, columnIndexes);
+            boolean result = statement.execute(SELECT_SQL, columnIndexes);
             assertTrue(result);
             assertThat(statement.getResultSetType(), is(ResultSet.TYPE_FORWARD_ONLY));
             assertThat(statement.getResultSetConcurrency(), is(ResultSet.CONCUR_READ_ONLY));
@@ -168,7 +168,7 @@ public final class EncryptStatementTest extends AbstractShardingSphereDataSource
     }
     
     private void assertResultSet(final int resultSetCount, final int id, final Object pwd, final Object plain) throws SQLException {
-        try (Connection conn = getDatabaseTypeMap().get(DatabaseTypes.getActualDatabaseType("H2")).get("encrypt").getConnection();
+        try (Connection conn = getDatabaseTypeMap().get(DatabaseTypeRegistry.getActualDatabaseType("H2")).get("encrypt").getConnection();
              Statement stmt = conn.createStatement()) {
             ResultSet resultSet = stmt.executeQuery(SELECT_SQL_TO_ASSERT);
             int count = 1;
@@ -203,7 +203,7 @@ public final class EncryptStatementTest extends AbstractShardingSphereDataSource
             ResultSet resultSet = statement.executeQuery(SHOW_COLUMNS_SQL);
             int count = 0;
             while (resultSet.next()) {
-                if (resultSet.getString("FIELD").equals("pwd")) {
+                if ("pwd".equals(resultSet.getString("FIELD"))) {
                     count++;
                 }
             }

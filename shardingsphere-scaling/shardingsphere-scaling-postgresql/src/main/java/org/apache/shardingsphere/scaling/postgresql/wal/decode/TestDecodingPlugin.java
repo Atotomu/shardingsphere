@@ -18,7 +18,8 @@
 package org.apache.shardingsphere.scaling.postgresql.wal.decode;
 
 import lombok.AllArgsConstructor;
-import org.apache.shardingsphere.scaling.core.exception.SyncTaskExecuteException;
+import org.apache.shardingsphere.scaling.core.constant.ScalingConstant;
+import org.apache.shardingsphere.scaling.core.exception.ScalingTaskExecuteException;
 import org.apache.shardingsphere.scaling.postgresql.wal.event.AbstractRowEvent;
 import org.apache.shardingsphere.scaling.postgresql.wal.event.AbstractWalEvent;
 import org.apache.shardingsphere.scaling.postgresql.wal.event.DeleteRowEvent;
@@ -65,17 +66,17 @@ public final class TestDecodingPlugin implements DecodingPlugin {
         String tableName = readTableName(data);
         String rowEventType = readRowEventType(data);
         switch (rowEventType) {
-            case "INSERT":
+            case ScalingConstant.INSERT:
                 result = readWriteRowEvent(data);
                 break;
-            case "UPDATE":
+            case ScalingConstant.UPDATE:
                 result = readUpdateRowEvent(data);
                 break;
-            case "DELETE":
+            case ScalingConstant.DELETE:
                 result = readDeleteRowEvent(data);
                 break;
             default:
-                throw new SyncTaskExecuteException("");
+                throw new ScalingTaskExecuteException("");
         }
         String[] tableMetadata = tableName.split("\\.");
         result.setSchemaName(tableMetadata[0]);
@@ -84,14 +85,14 @@ public final class TestDecodingPlugin implements DecodingPlugin {
     }
     
     private AbstractRowEvent readWriteRowEvent(final ByteBuffer data) {
-        WriteRowEvent writeRowEvent = new WriteRowEvent();
+        WriteRowEvent result = new WriteRowEvent();
         List<Object> afterColumns = new LinkedList<>();
         
         while (data.hasRemaining()) {
             afterColumns.add(readColumn(data));
         }
-        writeRowEvent.setAfterRow(afterColumns);
-        return writeRowEvent;
+        result.setAfterRow(afterColumns);
+        return result;
     }
     
     private AbstractRowEvent readUpdateRowEvent(final ByteBuffer data) {
@@ -179,16 +180,16 @@ public final class TestDecodingPlugin implements DecodingPlugin {
             case "time without time zone":
                 try {
                     return timestampUtils.toTime(null, readNextString(data));
-                } catch (SQLException e) {
-                    throw new DecodingException(e);
+                } catch (final SQLException ex) {
+                    throw new DecodingException(ex);
                 }
             case "date":
                 return Date.valueOf(readNextString(data));
             case "timestamp without time zone":
                 try {
                     return timestampUtils.toTimestamp(null, readNextString(data));
-                } catch (SQLException e) {
-                    throw new DecodingException(e);
+                } catch (final SQLException ex) {
+                    throw new DecodingException(ex);
                 }
             case "bytea":
                 return decodeHex(readNextString(data).substring(2));
@@ -222,7 +223,7 @@ public final class TestDecodingPlugin implements DecodingPlugin {
                 if (' ' == c2) {
                     return result.toString();
                 } else if ('\'' != c2) {
-                    throw new SyncTaskExecuteException("Read character varying data unexpected exception");
+                    throw new ScalingTaskExecuteException("Read character varying data unexpected exception");
                 }
             }
             result.append(c);

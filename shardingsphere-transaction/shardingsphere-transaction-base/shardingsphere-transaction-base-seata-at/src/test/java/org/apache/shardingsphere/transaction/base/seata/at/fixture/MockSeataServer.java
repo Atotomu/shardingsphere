@@ -49,7 +49,7 @@ public final class MockSeataServer {
     private final int port;
     
     @Getter
-    private MockMessageHandler messageHandler = new MockMessageHandler();
+    private final MockMessageHandler messageHandler = new MockMessageHandler();
     
     @Getter
     private final AtomicBoolean initialized = new AtomicBoolean(false);
@@ -64,7 +64,7 @@ public final class MockSeataServer {
     /**
      * start.
      */
-    @SneakyThrows
+    @SneakyThrows(InterruptedException.class)
     public void start() {
         bootstrap.group(bossGroup, workerGroup)
             .channel(NioServerSocketChannel.class)
@@ -90,11 +90,10 @@ public final class MockSeataServer {
     /**
      * shutdown.
      */
-    @SneakyThrows
     public void shutdown() {
         if (initialized.get()) {
-            this.bossGroup.shutdownGracefully();
-            this.workerGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
         }
     }
 }

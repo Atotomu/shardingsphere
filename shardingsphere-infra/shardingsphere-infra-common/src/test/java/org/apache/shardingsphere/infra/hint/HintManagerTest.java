@@ -112,26 +112,50 @@ public final class HintManagerTest {
     }
     
     @Test
-    public void assertSetMasterRouteOnly() {
+    public void assertAddDatabaseShardingValueOnlyDatabaseSharding() {
         try (HintManager hintManager = HintManager.getInstance()) {
-            hintManager.setMasterRouteOnly();
-            assertTrue(HintManager.isMasterRouteOnly());
+            hintManager.setDatabaseShardingValue(1);
+            assertTrue(HintManager.isDatabaseShardingOnly());
+            hintManager.addDatabaseShardingValue("logic_table", 2);
+            assertFalse(HintManager.isDatabaseShardingOnly());
+            assertThat(HintManager.getDatabaseShardingValues("logic_table").size(), is(1));
+            assertTrue(HintManager.getDatabaseShardingValues("logic_table").contains(2));
         }
     }
     
     @Test
-    public void assertIsMasterRouteOnly() {
+    public void assertAddTableShardingValueOnlyDatabaseSharding() {
         try (HintManager hintManager = HintManager.getInstance()) {
-            hintManager.setMasterRouteOnly();
-            assertTrue(HintManager.isMasterRouteOnly());
+            hintManager.setDatabaseShardingValue(1);
+            assertTrue(HintManager.isDatabaseShardingOnly());
+            hintManager.addTableShardingValue("logic_table", 2);
+            assertFalse(HintManager.isDatabaseShardingOnly());
+            assertThat(HintManager.getTableShardingValues("logic_table").size(), is(1));
+            assertTrue(HintManager.getTableShardingValues("logic_table").contains(2));
         }
     }
     
     @Test
-    public void assertIsMasterRouteOnlyWithoutSet() {
+    public void assertSetPrimaryRouteOnly() {
+        try (HintManager hintManager = HintManager.getInstance()) {
+            hintManager.setPrimaryRouteOnly();
+            assertTrue(HintManager.isPrimaryRouteOnly());
+        }
+    }
+    
+    @Test
+    public void assertIsPrimaryRouteOnly() {
+        try (HintManager hintManager = HintManager.getInstance()) {
+            hintManager.setPrimaryRouteOnly();
+            assertTrue(HintManager.isPrimaryRouteOnly());
+        }
+    }
+    
+    @Test
+    public void assertIsPrimaryRouteOnlyWithoutSet() {
         HintManager hintManager = HintManager.getInstance();
         hintManager.close();
-        assertFalse(HintManager.isMasterRouteOnly());
+        assertFalse(HintManager.isPrimaryRouteOnly());
     }
     
     @Test

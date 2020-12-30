@@ -25,7 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 
-public class YamlDataSourceFactory {
+public final class YamlDataSourceFactory {
     
     public static DataSource newInstance(final ShardingType shardingType) throws SQLException, IOException {
         switch (shardingType) {
@@ -35,8 +35,8 @@ public class YamlDataSourceFactory {
                 return YamlShardingSphereDataSourceFactory.createDataSource(getFile("/META-INF/shadow-databases.yaml"));
             case ENCRYPT_SHADOW:
                 return YamlShardingSphereDataSourceFactory.createDataSource(getFile("/META-INF/encrypt-shadow-databases.yaml"));
-            case MASTER_SLAVE_SHADOW:
-                return YamlShardingSphereDataSourceFactory.createDataSource(getFile("/META-INF/master-slave-shadow-databases.yaml"));
+            case REPLICA_QUERY_SHADOW:
+                return YamlShardingSphereDataSourceFactory.createDataSource(getFile("/META-INF/replica-query-shadow-databases.yaml"));
             default:
                 throw new UnsupportedOperationException(shardingType.name());
         }

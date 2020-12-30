@@ -21,19 +21,24 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.shardingsphere.scaling.core.config.JDBCDataSourceConfiguration;
-import org.apache.shardingsphere.scaling.core.config.RdbmsConfiguration;
-import org.apache.shardingsphere.scaling.core.exception.SyncTaskExecuteException;
-import org.apache.shardingsphere.scaling.core.execute.executor.AbstractShardingScalingExecutor;
+import org.apache.shardingsphere.infra.metadata.schema.model.TableMetaData;
+import org.apache.shardingsphere.scaling.core.config.InventoryDumperConfiguration;
+import org.apache.shardingsphere.scaling.core.config.datasource.StandardJDBCDataSourceConfiguration;
+import org.apache.shardingsphere.scaling.core.constant.ScalingConstant;
+import org.apache.shardingsphere.scaling.core.datasource.DataSourceManager;
+import org.apache.shardingsphere.scaling.core.exception.ScalingTaskExecuteException;
+import org.apache.shardingsphere.scaling.core.execute.executor.AbstractScalingExecutor;
 import org.apache.shardingsphere.scaling.core.execute.executor.channel.Channel;
-import org.apache.shardingsphere.scaling.core.job.position.NopLogPosition;
 import org.apache.shardingsphere.scaling.core.execute.executor.record.Column;
 import org.apache.shardingsphere.scaling.core.execute.executor.record.DataRecord;
 import org.apache.shardingsphere.scaling.core.execute.executor.record.FinishedRecord;
 import org.apache.shardingsphere.scaling.core.execute.executor.record.Record;
-import org.apache.shardingsphere.scaling.core.datasource.DataSourceManager;
+import org.apache.shardingsphere.scaling.core.job.position.FinishedPosition;
+import org.apache.shardingsphere.scaling.core.job.position.PlaceholderPosition;
+import org.apache.shardingsphere.scaling.core.job.position.Position;
+import org.apache.shardingsphere.scaling.core.job.position.PrimaryKeyPosition;
 import org.apache.shardingsphere.scaling.core.metadata.MetaDataManager;
-import org.apache.shardingsphere.sql.parser.binder.metadata.table.TableMetaData;
+import org.apache.shardingsphere.scaling.core.utils.RdbmsConfigurationUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -45,10 +50,10 @@ import java.sql.SQLException;
  * Abstract JDBC dumper implement.
  */
 @Slf4j
-public abstract class AbstractJDBCDumper extends AbstractShardingScalingExecutor implements JDBCDumper {
+public abstract class AbstractJDBCDumper extends AbstractScalingExecutor implements JDBCDumper {
     
     @Getter(AccessLevel.PROTECTED)
-    private final RdbmsConfiguration rdbmsConfiguration;
+    private final InventoryDumperConfiguration inventoryDumperConfig;
     
     private final DataSourceManager dataSourceManager;
     
@@ -57,69 +62,60 @@ public abstract class AbstractJDBCDumper extends AbstractShardingScalingExecutor
     @Setter
     private Channel channel;
     
-    public AbstractJDBCDumper(final RdbmsConfiguration rdbmsConfiguration, final DataSourceManager dataSourceManager) {
-        if (!JDBCDataSourceConfiguration.class.equals(rdbmsConfiguration.getDataSourceConfiguration().getClass())) {
+    protected AbstractJDBCDumper(final InventoryDumperConfiguration inventoryDumperConfig, final DataSourceManager dataSourceManager) {
+        if (!StandardJDBCDataSourceConfiguration.class.equals(inventoryDumperConfig.getDataSourceConfig().getClass())) {
             throw new UnsupportedOperationException("AbstractJDBCDumper only support JDBCDataSourceConfiguration");
         }
-        this.rdbmsConfiguration = rdbmsConfiguration;
+        this.inventoryDumperConfig = inventoryDumperConfig;
         this.dataSourceManager = dataSourceManager;
-        this.tableMetaData = createTableMetaData();
+        tableMetaData = createTableMetaData();
     }
     
     private TableMetaData createTableMetaData() {
-        MetaDataManager metaDataManager = new MetaDataManager(dataSourceManager.getDataSource(rdbmsConfiguration.getDataSourceConfiguration()));
-        return metaDataManager.getTableMetaData(rdbmsConfiguration.getTableName());
+        MetaDataManager metaDataManager = new MetaDataManager(dataSourceManager.getDataSource(inventoryDumperConfig.getDataSourceConfig()));
+        return metaDataManager.getTableMetaData(inventoryDumperConfig.getTableName());
     }
     
     @Override
     public final void start() {
         super.start();
-        dump(channel);
+        dump();
     }
     
-    @Override
-    public final void dump(final Channel channel) {
-        try (Connection conn = dataSourceManager.getDataSource(rdbmsConfiguration.getDataSourceConfiguration()).getConnection()) {
-            String sql = String.format("SELECT * FROM %s %s", rdbmsConfiguration.getTableName(), rdbmsConfiguration.getWhereCondition());
+    private void dump() {
+        try (Connection conn = dataSourceManager.getDataSource(inventoryDumperConfig.getDataSourceConfig()).getConnection()) {
+            String sql = String.format("SELECT * FROM %s %s", inventoryDumperConfig.getTableName(), RdbmsConfigurationUtil.getWhereCondition(inventoryDumperConfig));
             PreparedStatement ps = createPreparedStatement(conn, sql);
             ResultSet rs = ps.executeQuery();
             ResultSetMetaData metaData = rs.getMetaData();
             while (isRunning() && rs.next()) {
-                DataRecord record = new DataRecord(new NopLogPosition(), metaData.getColumnCount());
-                record.setType("BOOTSTRAP-INSERT");
-                record.setTableName(rdbmsConfiguration.getTableNameMap().get(rdbmsConfiguration.getTableName()));
+                DataRecord record = new DataRecord(newPosition(rs), metaData.getColumnCount());
+                record.setType(ScalingConstant.INSERT);
+                record.setTableName(inventoryDumperConfig.getTableNameMap().get(inventoryDumperConfig.getTableName()));
                 for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                    record.addColumn(new Column(metaData.getColumnName(i), readValue(rs, i), true, tableMetaData.isPrimaryKey(i)));
+                    record.addColumn(new Column(metaData.getColumnName(i), readValue(rs, i), true, tableMetaData.isPrimaryKey(i - 1)));
                 }
                 pushRecord(record);
             }
-        } catch (SQLException e) {
+            pushRecord(new FinishedRecord(new FinishedPosition()));
+        } catch (final SQLException ex) {
             stop();
             channel.close();
-            throw new SyncTaskExecuteException(e);
+            throw new ScalingTaskExecuteException(ex);
         } finally {
-            pushRecord(new FinishedRecord(new NopLogPosition()));
+            pushRecord(new FinishedRecord(new PlaceholderPosition()));
         }
     }
     
-    /**
-     * Create prepared statement.
-     *
-     * @param connection connection
-     * @param sql prepared sql
-     * @return prepared statement
-     * @throws SQLException SQL exception
-     */
+    private Position<?> newPosition(final ResultSet rs) throws SQLException {
+        if (null == inventoryDumperConfig.getPrimaryKey()) {
+            return new PlaceholderPosition();
+        }
+        return new PrimaryKeyPosition(rs.getLong(inventoryDumperConfig.getPrimaryKey()), ((PrimaryKeyPosition) inventoryDumperConfig.getPositionManager().getPosition()).getEndValue());
+    }
+    
     protected abstract PreparedStatement createPreparedStatement(Connection connection, String sql) throws SQLException;
     
-    /**
-     * Read value from {@code ResultSet}.
-     *
-     * @param resultSet result set
-     * @param index of read column
-     * @return value
-     * @throws SQLException sql exception
-     */
     protected Object readValue(final ResultSet resultSet, final int index) throws SQLException {
         return resultSet.getObject(index);
     }
@@ -127,7 +123,7 @@ public abstract class AbstractJDBCDumper extends AbstractShardingScalingExecutor
     private void pushRecord(final Record record) {
         try {
             channel.pushRecord(record);
-        } catch (InterruptedException ignored) {
+        } catch (final InterruptedException ignored) {
         }
     }
 }

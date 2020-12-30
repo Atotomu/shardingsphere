@@ -28,11 +28,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class ExampleMain {
+public final class ExampleMain {
     
     private static final HintType TYPE = HintType.DATABASE_TABLES;
 //    private static final HintType TYPE = HintType.DATABASE_ONLY;
-//    private static final HintType TYPE = HintType.MASTER_ONLY;
+//    private static final HintType TYPE = HintType.PRIMARY_ONLY;
     
     public static void main(final String[] args) throws SQLException, IOException {
         DataSource dataSource = getDataSource();
@@ -42,14 +42,14 @@ public class ExampleMain {
         exampleService.cleanEnvironment();
     }
     
-    private static DataSource getDataSource() throws IOException, SQLException {
+    private static DataSource getDataSource() throws IOException {
         switch (TYPE) {
             case DATABASE_TABLES:
                 return YamlDataSourceFactory.createDataSource(getFile("/META-INF/hint-databases-tables.yaml"));
             case DATABASE_ONLY:
                 return YamlDataSourceFactory.createDataSource(getFile("/META-INF/hint-databases-only.yaml"));
-            case MASTER_ONLY:
-                return YamlDataSourceFactory.createDataSource(getFile("/META-INF/hint-master-only.yaml"));
+            case PRIMARY_ONLY:
+                return YamlDataSourceFactory.createDataSource(getFile("/META-INF/hint-primary-only.yaml"));
             default:
                 throw new UnsupportedOperationException("unsupported type");
         }
@@ -83,8 +83,8 @@ public class ExampleMain {
             case DATABASE_ONLY:
                 statement.execute("sctl:hint set DatabaseShardingValue=1");
                 return;
-            case MASTER_ONLY:
-                statement.execute("sctl:hint set MASTER_ONLY=true");
+            case PRIMARY_ONLY:
+                statement.execute("sctl:hint set PRIMARY_ONLY=true");
                 return;
             default:
                 throw new UnsupportedOperationException("unsupported type");

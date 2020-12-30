@@ -18,13 +18,15 @@
 package org.apache.shardingsphere.infra.merge.result.impl.memory;
 
 import com.google.common.base.Preconditions;
-import org.apache.shardingsphere.infra.executor.sql.QueryResult;
+import lombok.RequiredArgsConstructor;
+import org.apache.shardingsphere.infra.executor.sql.execute.result.query.QueryResult;
 
 import java.sql.SQLException;
 
 /**
  * Memory query result row.
  */
+@RequiredArgsConstructor
 public final class MemoryQueryResultRow {
     
     private final Object[] data;
@@ -34,7 +36,7 @@ public final class MemoryQueryResultRow {
     }
     
     private Object[] load(final QueryResult queryResult) throws SQLException {
-        int columnCount = queryResult.getColumnCount();
+        int columnCount = queryResult.getMetaData().getColumnCount();
         Object[] result = new Object[columnCount];
         for (int i = 0; i < columnCount; i++) {
             result[i] = queryResult.getValue(i + 1, Object.class);

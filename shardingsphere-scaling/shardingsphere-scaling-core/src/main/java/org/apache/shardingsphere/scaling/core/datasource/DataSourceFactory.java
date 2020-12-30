@@ -17,11 +17,10 @@
 
 package org.apache.shardingsphere.scaling.core.datasource;
 
-import com.zaxxer.hikari.HikariDataSource;
-import org.apache.shardingsphere.scaling.core.config.DataSourceConfiguration;
-import org.apache.shardingsphere.scaling.core.config.JDBCDataSourceConfiguration;
+import lombok.SneakyThrows;
+import org.apache.shardingsphere.scaling.core.config.datasource.ScalingDataSourceConfiguration;
 
-import javax.sql.DataSource;
+import java.sql.SQLException;
 
 /**
  * Data source factory.
@@ -29,23 +28,13 @@ import javax.sql.DataSource;
 public final class DataSourceFactory {
     
     /**
-     * New instance data source.
+     * New instance data source wrapper.
      *
-     * @param dataSourceConfiguration data source configuration
-     * @return new data source
+     * @param dataSourceConfig scaling data source configuration
+     * @return new data source wrapper
      */
-    public DataSource newInstance(final DataSourceConfiguration dataSourceConfiguration) {
-        if (dataSourceConfiguration instanceof JDBCDataSourceConfiguration) {
-            return newInstanceDataSourceByJDBC((JDBCDataSourceConfiguration) dataSourceConfiguration);
-        }
-        throw new UnsupportedOperationException("Unsupported data source configuration");
-    }
-    
-    private DataSource newInstanceDataSourceByJDBC(final JDBCDataSourceConfiguration dataSourceConfiguration) {
-        HikariDataSource result = new HikariDataSource();
-        result.setJdbcUrl(dataSourceConfiguration.getJdbcUrl());
-        result.setUsername(dataSourceConfiguration.getUsername());
-        result.setPassword(dataSourceConfiguration.getPassword());
-        return result;
+    @SneakyThrows(SQLException.class)
+    public DataSourceWrapper newInstance(final ScalingDataSourceConfiguration dataSourceConfig) {
+        return new DataSourceWrapper(dataSourceConfig.toDataSource());
     }
 }

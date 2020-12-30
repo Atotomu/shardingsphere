@@ -40,6 +40,8 @@ public abstract class AbstractStatementAdapter extends AbstractUnsupportedOperat
     
     private int fetchSize;
     
+    private int fetchDirection;
+    
     private final ForceExecuteTemplate<Statement> forceExecuteTemplate = new ForceExecuteTemplate<>();
     
     @SuppressWarnings("unchecked")
@@ -79,9 +81,21 @@ public abstract class AbstractStatementAdapter extends AbstractUnsupportedOperat
     @SuppressWarnings("unchecked")
     @Override
     public final void setFetchSize(final int rows) throws SQLException {
-        this.fetchSize = rows;
+        fetchSize = rows;
         recordMethodInvocation(targetClass, "setFetchSize", new Class[] {int.class}, new Object[] {rows});
         forceExecuteTemplate.execute((Collection) getRoutedStatements(), statement -> statement.setFetchSize(rows));
+    }
+    
+    @Override
+    public int getFetchDirection() {
+        return fetchDirection;
+    }
+    
+    @Override
+    public void setFetchDirection(final int direction) throws SQLException {
+        fetchDirection = direction;
+        recordMethodInvocation(targetClass, "setFetchDirection", new Class[] {int.class}, new Object[] {direction});
+        forceExecuteTemplate.execute((Collection) getRoutedStatements(), statement -> statement.setFetchDirection(direction));
     }
     
     @SuppressWarnings("unchecked")

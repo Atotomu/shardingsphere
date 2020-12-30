@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.sharding.api.sharding.standard;
 
-import org.apache.shardingsphere.sharding.spi.algorithm.ShardingAlgorithm;
+import org.apache.shardingsphere.sharding.spi.ShardingAlgorithm;
 
 import java.util.Collection;
 
@@ -31,18 +31,18 @@ public interface StandardShardingAlgorithm<T extends Comparable<?>> extends Shar
     /**
      * Sharding.
      * 
-     * @param availableTargetNames available data sources or tables's names
+     * @param availableTargetNames available data sources or table names
      * @param shardingValue sharding value
-     * @return sharding result for data source or table's name
+     * @return sharding result for data source or table name
      */
     String doSharding(Collection<String> availableTargetNames, PreciseShardingValue<T> shardingValue);
     
     /**
      * Sharding.
      *
-     * @param availableTargetNames available data sources or tables's names
+     * @param availableTargetNames available data sources or table names
      * @param shardingValue sharding value
-     * @return sharding results for data sources or tables's names
+     * @return sharding results for data sources or table names
      */
     Collection<String> doSharding(Collection<String> availableTargetNames, RangeShardingValue<T> shardingValue);
 }

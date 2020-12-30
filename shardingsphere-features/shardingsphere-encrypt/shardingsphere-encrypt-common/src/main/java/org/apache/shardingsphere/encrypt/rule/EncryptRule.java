@@ -19,20 +19,19 @@ package org.apache.shardingsphere.encrypt.rule;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import org.apache.shardingsphere.encrypt.api.config.rule.EncryptColumnRuleConfiguration;
+import org.apache.shardingsphere.encrypt.algorithm.config.AlgorithmProvidedEncryptRuleConfiguration;
 import org.apache.shardingsphere.encrypt.api.config.EncryptRuleConfiguration;
+import org.apache.shardingsphere.encrypt.api.config.rule.EncryptColumnRuleConfiguration;
 import org.apache.shardingsphere.encrypt.api.config.rule.EncryptTableRuleConfiguration;
-import org.apache.shardingsphere.encrypt.api.config.strategy.EncryptStrategyConfiguration;
-import org.apache.shardingsphere.encrypt.strategy.spi.EncryptAlgorithm;
-import org.apache.shardingsphere.encrypt.strategy.spi.QueryAssistedEncryptAlgorithm;
-import org.apache.shardingsphere.infra.rule.ShardingSphereRule;
+import org.apache.shardingsphere.encrypt.spi.EncryptAlgorithm;
+import org.apache.shardingsphere.encrypt.spi.QueryAssistedEncryptAlgorithm;
+import org.apache.shardingsphere.infra.config.algorithm.ShardingSphereAlgorithmFactory;
+import org.apache.shardingsphere.infra.rule.type.TableContainedRule;
 import org.apache.shardingsphere.infra.spi.ShardingSphereServiceLoader;
-import org.apache.shardingsphere.infra.spi.type.TypedSPIRegistry;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,30 +40,36 @@ import java.util.stream.Collectors;
 /**
  * Encrypt rule.
  */
-public final class EncryptRule implements ShardingSphereRule {
+public final class EncryptRule implements TableContainedRule {
     
     static {
         ShardingSphereServiceLoader.register(EncryptAlgorithm.class);
     }
     
-    private final Map<String, EncryptAlgorithm> encryptAlgorithms = new LinkedHashMap<>();
+    private final Map<String, EncryptAlgorithm> encryptors = new LinkedHashMap<>();
     
     private final Map<String, EncryptTable> tables = new LinkedHashMap<>();
     
-    public EncryptRule(final EncryptRuleConfiguration encryptRuleConfiguration) {
-        Preconditions.checkArgument(isValidRuleConfiguration(encryptRuleConfiguration), "Invalid encrypt column configurations in EncryptTableRuleConfigurations.");
-        encryptRuleConfiguration.getEncryptStrategies().forEach(each -> encryptAlgorithms.put(each.getName(), createEncryptAlgorithm(each)));
-        encryptRuleConfiguration.getTables().forEach(each -> tables.put(each.getName(), new EncryptTable(each)));
+    public EncryptRule(final EncryptRuleConfiguration config) {
+        Preconditions.checkArgument(isValidRuleConfiguration(config), "Invalid encrypt column configurations in EncryptTableRuleConfigurations.");
+        config.getEncryptors().forEach((key, value) -> encryptors.put(key, ShardingSphereAlgorithmFactory.createAlgorithm(value, EncryptAlgorithm.class)));
+        config.getTables().forEach(each -> tables.put(each.getName(), new EncryptTable(each)));
     }
     
-    private boolean isValidRuleConfiguration(final EncryptRuleConfiguration encryptRuleConfiguration) {
-        return (encryptRuleConfiguration.getEncryptStrategies().isEmpty() && encryptRuleConfiguration.getTables().isEmpty()) || isValidTableConfiguration(encryptRuleConfiguration);
+    public EncryptRule(final AlgorithmProvidedEncryptRuleConfiguration config) {
+        Preconditions.checkArgument(isValidRuleConfigurationWithAlgorithmProvided(config), "Invalid encrypt column configurations in EncryptTableRuleConfigurations.");
+        encryptors.putAll(config.getEncryptors());
+        config.getTables().forEach(each -> tables.put(each.getName(), new EncryptTable(each)));
     }
     
-    private boolean isValidTableConfiguration(final EncryptRuleConfiguration encryptRuleConfiguration) {
-        for (EncryptTableRuleConfiguration table : encryptRuleConfiguration.getTables()) {
+    private boolean isValidRuleConfiguration(final EncryptRuleConfiguration config) {
+        return (config.getEncryptors().isEmpty() && config.getTables().isEmpty()) || isValidTableConfiguration(config);
+    }
+    
+    private boolean isValidTableConfiguration(final EncryptRuleConfiguration config) {
+        for (EncryptTableRuleConfiguration table : config.getTables()) {
             for (EncryptColumnRuleConfiguration column : table.getColumns()) {
-                if (!isValidColumnConfiguration(encryptRuleConfiguration, column)) {
+                if (!isValidColumnConfiguration(config, column)) {
                     return false;
                 }
             }
@@ -72,23 +77,32 @@ public final class EncryptRule implements ShardingSphereRule {
         return true;
     }
     
-    private boolean isValidColumnConfiguration(final EncryptRuleConfiguration encryptRuleConfiguration, final EncryptColumnRuleConfiguration column) {
-        return !Strings.isNullOrEmpty(column.getEncryptStrategyName()) && !Strings.isNullOrEmpty(column.getCipherColumn()) && containsEncryptStrategies(encryptRuleConfiguration, column);
+    private boolean isValidColumnConfiguration(final EncryptRuleConfiguration encryptRuleConfig, final EncryptColumnRuleConfiguration column) {
+        return !Strings.isNullOrEmpty(column.getEncryptorName()) && !Strings.isNullOrEmpty(column.getCipherColumn()) && containsEncryptors(encryptRuleConfig, column);
     }
     
-    private boolean containsEncryptStrategies(final EncryptRuleConfiguration encryptRuleConfiguration, final EncryptColumnRuleConfiguration column) {
-        for (EncryptStrategyConfiguration each : encryptRuleConfiguration.getEncryptStrategies()) {
-            if (each.getName().equals(column.getEncryptStrategyName())) {
-                return true;
+    private boolean containsEncryptors(final EncryptRuleConfiguration encryptRuleConfig, final EncryptColumnRuleConfiguration column) {
+        return encryptRuleConfig.getEncryptors().keySet().stream().anyMatch(each -> each.equals(column.getEncryptorName()));
+    }
+    
+    private boolean isValidRuleConfigurationWithAlgorithmProvided(final AlgorithmProvidedEncryptRuleConfiguration config) {
+        return (config.getEncryptors().isEmpty() && config.getTables().isEmpty()) || isValidTableConfigurationWithAlgorithmProvided(config);
+    }
+    
+    private boolean isValidTableConfigurationWithAlgorithmProvided(final AlgorithmProvidedEncryptRuleConfiguration config) {
+        for (EncryptTableRuleConfiguration table : config.getTables()) {
+            for (EncryptColumnRuleConfiguration column : table.getColumns()) {
+                if (!isValidColumnConfigurationWithAlgorithmProvided(config, column)) {
+                    return false;
+                }
             }
         }
-        return false;
+        return true;
     }
     
-    private EncryptAlgorithm createEncryptAlgorithm(final EncryptStrategyConfiguration encryptStrategyConfiguration) {
-        EncryptAlgorithm result = TypedSPIRegistry.getRegisteredService(EncryptAlgorithm.class, encryptStrategyConfiguration.getType(), encryptStrategyConfiguration.getProperties());
-        result.init();
-        return result;
+    private boolean isValidColumnConfigurationWithAlgorithmProvided(final AlgorithmProvidedEncryptRuleConfiguration encryptRuleConfig, final EncryptColumnRuleConfiguration column) {
+        return !Strings.isNullOrEmpty(column.getEncryptorName()) && !Strings.isNullOrEmpty(column.getCipherColumn())
+                && encryptRuleConfig.getEncryptors().containsKey(column.getEncryptorName());
     }
     
     /**
@@ -102,35 +116,28 @@ public final class EncryptRule implements ShardingSphereRule {
     }
     
     /**
-     * Get logic column of cipher column.
-     *
-     * @param logicTable logic table
-     * @param cipherColumn cipher column
-     * @return logic column
-     */
-    public String getLogicColumnOfCipher(final String logicTable, final String cipherColumn) {
-        return tables.get(logicTable).getLogicColumnOfCipher(cipherColumn);
-    }
-    
-    /**
-     * Find plain column.
+     * Find encryptor.
      *
      * @param logicTable logic table name
      * @param logicColumn logic column name
-     * @return plain column
+     * @return encryptor
      */
-    public Optional<String> findPlainColumn(final String logicTable, final String logicColumn) {
-        Optional<String> originColumnName = findOriginColumnName(logicTable, logicColumn);
-        return originColumnName.isPresent() && tables.containsKey(logicTable) ? tables.get(logicTable).findPlainColumn(originColumnName.get()) : Optional.empty();
+    public Optional<EncryptAlgorithm> findEncryptor(final String logicTable, final String logicColumn) {
+        return tables.containsKey(logicTable) ? tables.get(logicTable).findEncryptorName(logicColumn).map(encryptors::get) : Optional.empty();
     }
-
-    private Optional<String> findOriginColumnName(final String logicTable, final String logicColumn) {
-        for (String each : tables.get(logicTable).getLogicColumns()) {
-            if (logicColumn.equalsIgnoreCase(each)) {
-                return Optional.of(each);
-            }
-        }
-        return Optional.empty();
+    
+    /**
+     * get encrypt values.
+     *
+     * @param logicTable logic table
+     * @param logicColumn logic column
+     * @param originalValues original values
+     * @return encrypt values
+     */
+    public List<Object> getEncryptValues(final String logicTable, final String logicColumn, final List<Object> originalValues) {
+        Optional<EncryptAlgorithm> encryptor = findEncryptor(logicTable, logicColumn);
+        Preconditions.checkArgument(encryptor.isPresent(), String.format("Can not find QueryAssistedEncryptAlgorithm by %s.%s.", logicTable, logicColumn));
+        return originalValues.stream().map(input -> null == input ? null : String.valueOf(encryptor.get().encrypt(input.toString()))).collect(Collectors.toList());
     }
     
     /**
@@ -145,14 +152,13 @@ public final class EncryptRule implements ShardingSphereRule {
     }
     
     /**
-     * Is cipher column or not.
+     * Get logic and cipher columns.
      *
-     * @param tableName table name
-     * @param columnName column name
-     * @return cipher column or not
+     * @param logicTable logic table 
+     * @return logic and cipher columns
      */
-    public boolean isCipherColumn(final String tableName, final String columnName) {
-        return tables.containsKey(tableName) && tables.get(tableName).getCipherColumns().contains(columnName);
+    public Map<String, String> getLogicAndCipherColumns(final String logicTable) {
+        return tables.containsKey(logicTable) ? tables.get(logicTable).getLogicAndCipherColumns() : Collections.emptyMap();
     }
     
     /**
@@ -177,43 +183,6 @@ public final class EncryptRule implements ShardingSphereRule {
     }
     
     /**
-     * Get assisted query and plain columns.
-     *
-     * @param logicTable logic table name
-     * @return assisted query and plain columns
-     */
-    public Collection<String> getAssistedQueryAndPlainColumns(final String logicTable) {
-        Collection<String> result = new LinkedList<>();
-        result.addAll(getAssistedQueryColumns(logicTable));
-        result.addAll(getPlainColumns(logicTable));
-        return result;
-    }
-    
-    private Collection<String> getPlainColumns(final String logicTable) {
-        return tables.containsKey(logicTable) ? tables.get(logicTable).getPlainColumns() : Collections.emptyList();
-    }
-    
-    /**
-     * Get logic and cipher columns.
-     *
-     * @param logicTable logic table 
-     * @return logic and cipher columns
-     */
-    public Map<String, String> getLogicAndCipherColumns(final String logicTable) {
-        return tables.containsKey(logicTable) ? tables.get(logicTable).getLogicAndCipherColumns() : Collections.emptyMap();
-    }
-    
-    /**
-     * Get logic and plain columns.
-     *
-     * @param logicTable logic table 
-     * @return logic and plain columns
-     */
-    public Map<String, String> getLogicAndPlainColumns(final String logicTable) {
-        return tables.containsKey(logicTable) ? tables.get(logicTable).getLogicAndPlainColumns() : Collections.emptyMap();
-    }
-    
-    /**
      * Get encrypt assisted query values.
      *
      * @param logicTable logic table
@@ -222,47 +191,35 @@ public final class EncryptRule implements ShardingSphereRule {
      * @return assisted query values
      */
     public List<Object> getEncryptAssistedQueryValues(final String logicTable, final String logicColumn, final List<Object> originalValues) {
-        Optional<EncryptAlgorithm> encryptAlgorithm = findEncryptAlgorithm(logicTable, logicColumn);
-        Preconditions.checkArgument(encryptAlgorithm.isPresent() && encryptAlgorithm.get() instanceof QueryAssistedEncryptAlgorithm,
+        Optional<EncryptAlgorithm> encryptor = findEncryptor(logicTable, logicColumn);
+        Preconditions.checkArgument(encryptor.isPresent() && encryptor.get() instanceof QueryAssistedEncryptAlgorithm,
                 String.format("Can not find QueryAssistedEncryptAlgorithm by %s.%s.", logicTable, logicColumn));
-        return originalValues.stream().map(input -> null == input
-                ? null : ((QueryAssistedEncryptAlgorithm) encryptAlgorithm.get()).queryAssistedEncrypt(input.toString())).collect(Collectors.toList());
+        return originalValues.stream().map(input -> null == input ? null : ((QueryAssistedEncryptAlgorithm) encryptor.get()).queryAssistedEncrypt(input.toString())).collect(Collectors.toList());
     }
     
     /**
-     * get encrypt values.
-     *
-     * @param logicTable logic table
-     * @param logicColumn logic column
-     * @param originalValues original values
-     * @return encrypt values
-     */
-    public List<Object> getEncryptValues(final String logicTable, final String logicColumn, final List<Object> originalValues) {
-        Optional<EncryptAlgorithm> encryptAlgorithm = findEncryptAlgorithm(logicTable, logicColumn);
-        Preconditions.checkArgument(encryptAlgorithm.isPresent(), String.format("Can not find QueryAssistedEncryptAlgorithm by %s.%s.", logicTable, logicColumn));
-        return originalValues.stream().map(input -> null == input ? null : String.valueOf(encryptAlgorithm.get().encrypt(input.toString()))).collect(Collectors.toList());
-    }
-    
-    /**
-     * Find encrypt algorithm.
+     * Find plain column.
      *
      * @param logicTable logic table name
      * @param logicColumn logic column name
-     * @return encrypt algorithm
+     * @return plain column
      */
-    public Optional<EncryptAlgorithm> findEncryptAlgorithm(final String logicTable, final String logicColumn) {
-        if (!tables.containsKey(logicTable)) {
-            return Optional.empty();
-        }
-        return tables.get(logicTable).findEncryptStrategyName(logicColumn).map(encryptAlgorithms::get);
+    public Optional<String> findPlainColumn(final String logicTable, final String logicColumn) {
+        Optional<String> originColumnName = findOriginColumnName(logicTable, logicColumn);
+        return originColumnName.isPresent() && tables.containsKey(logicTable) ? tables.get(logicTable).findPlainColumn(originColumnName.get()) : Optional.empty();
     }
     
-    /**
-     * Get encrypt table names.
-     *
-     * @return encrypt table names
-     */
-    public Collection<String> getEncryptTableNames() {
+    private Optional<String> findOriginColumnName(final String logicTable, final String logicColumn) {
+        for (String each : tables.get(logicTable).getLogicColumns()) {
+            if (logicColumn.equalsIgnoreCase(each)) {
+                return Optional.of(each);
+            }
+        }
+        return Optional.empty();
+    }
+    
+    @Override
+    public Collection<String> getTables() {
         return tables.keySet();
     }
 }

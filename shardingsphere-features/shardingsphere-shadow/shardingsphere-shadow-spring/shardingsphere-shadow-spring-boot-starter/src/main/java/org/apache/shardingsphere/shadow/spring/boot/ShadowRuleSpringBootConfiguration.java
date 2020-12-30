@@ -17,11 +17,14 @@
 
 package org.apache.shardingsphere.shadow.spring.boot;
 
-import org.apache.shardingsphere.infra.yaml.config.YamlRuleConfiguration;
+import lombok.RequiredArgsConstructor;
+import org.apache.shardingsphere.infra.config.RuleConfiguration;
 import org.apache.shardingsphere.shadow.spring.boot.condition.ShadowSpringBootCondition;
+import org.apache.shardingsphere.shadow.spring.boot.rule.YamlShadowRuleSpringBootConfiguration;
 import org.apache.shardingsphere.shadow.yaml.config.YamlShadowRuleConfiguration;
+import org.apache.shardingsphere.shadow.yaml.swapper.ShadowRuleConfigurationYamlSwapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -30,18 +33,23 @@ import org.springframework.context.annotation.Configuration;
  * Shadow rule configuration for spring boot.
  */
 @Configuration
+@EnableConfigurationProperties(YamlShadowRuleSpringBootConfiguration.class)
+@ConditionalOnClass(YamlShadowRuleConfiguration.class)
+@Conditional(ShadowSpringBootCondition.class)
+@RequiredArgsConstructor
 public class ShadowRuleSpringBootConfiguration {
     
+    private final ShadowRuleConfigurationYamlSwapper swapper = new ShadowRuleConfigurationYamlSwapper();
+    
+    private final YamlShadowRuleSpringBootConfiguration yamlConfig;
+    
     /**
-     * Shadow YAML rule spring boot configuration.
+     * Shadow rule configuration.
      *
-     * @return YAML rule configuration
+     * @return shadow rule configuration
      */
     @Bean
-    @ConfigurationProperties(prefix = "spring.shardingsphere.rules.shadow")
-    @ConditionalOnClass(YamlShadowRuleConfiguration.class)
-    @Conditional(ShadowSpringBootCondition.class)
-    public YamlRuleConfiguration shadow() {
-        return new YamlShadowRuleConfiguration();
+    public RuleConfiguration shadowRuleConfiguration() {
+        return swapper.swapToObject(yamlConfig.getShadow());
     }
 }

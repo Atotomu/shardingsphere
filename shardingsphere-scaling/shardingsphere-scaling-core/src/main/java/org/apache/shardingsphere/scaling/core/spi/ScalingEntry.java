@@ -17,12 +17,14 @@
 
 package org.apache.shardingsphere.scaling.core.spi;
 
-import org.apache.shardingsphere.scaling.core.job.preparer.checker.DataSourceChecker;
+import org.apache.shardingsphere.infra.database.type.DatabaseTypeAwareSPI;
 import org.apache.shardingsphere.scaling.core.execute.executor.dumper.JDBCDumper;
-import org.apache.shardingsphere.scaling.core.job.position.LogPositionManager;
 import org.apache.shardingsphere.scaling.core.execute.executor.dumper.LogDumper;
 import org.apache.shardingsphere.scaling.core.execute.executor.importer.Importer;
-import org.apache.shardingsphere.infra.database.type.DatabaseTypeAwareSPI;
+import org.apache.shardingsphere.scaling.core.execute.executor.sqlbuilder.ScalingSQLBuilder;
+import org.apache.shardingsphere.scaling.core.job.check.DataConsistencyChecker;
+import org.apache.shardingsphere.scaling.core.job.position.PositionManager;
+import org.apache.shardingsphere.scaling.core.job.preparer.checker.DataSourceChecker;
 
 /**
  * Scaling entry.
@@ -44,11 +46,11 @@ public interface ScalingEntry extends DatabaseTypeAwareSPI {
     Class<? extends LogDumper> getLogDumperClass();
 
     /**
-     * Get log position manager type.
+     * Get position manager type.
      *
-     * @return log manager type
+     * @return position manager type
      */
-    Class<? extends LogPositionManager> getLogPositionManager();
+    Class<? extends PositionManager> getPositionManager();
     
     /**
      * Get importer type.
@@ -58,8 +60,23 @@ public interface ScalingEntry extends DatabaseTypeAwareSPI {
     Class<? extends Importer> getImporterClass();
 
     /**
-     * Get checker type.
-     * @return checker type
+     * Get data source checker.
+     *
+     * @return data source checker type
      */
-    Class<? extends DataSourceChecker> getCheckerClass();
+    Class<? extends DataSourceChecker> getDataSourceCheckerClass();
+    
+    /**
+     * Get data consistency checker.
+     *
+     * @return data consistency checker type
+     */
+    Class<? extends DataConsistencyChecker> getDataConsistencyCheckerClass();
+    
+    /**
+     * Get SQL builder class.
+     *
+     * @return SQL builder type
+     */
+    Class<? extends ScalingSQLBuilder> getSQLBuilderClass();
 }

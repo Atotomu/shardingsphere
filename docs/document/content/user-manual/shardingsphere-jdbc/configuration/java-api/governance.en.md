@@ -1,39 +1,41 @@
 +++
 title = "Governance"
-weight = 6
+weight = 5
 +++
 
-## Root Configuration
+## Configuration Item Explanation
 
-Class name: org.apache.shardingsphere.orchestration.center.config.OrchestrationConfiguration
+### Management
 
-Attributes:
+*Configuration Entrance*
 
-| *Name*                   | *Data Type*                         | *Description*                                                                                                         |
-| ------------------------ | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| instanceConfigurationMap | Map\<String, CenterConfiguration\>  | Config map of config-center&registry-center, the key is center's name, the value is the config-center/registry-center |
-
-## Config / Registry Center Configuration
-
-Class name: org.apache.shardingsphere.orchestration.center.config.CenterConfiguration
+Class name: org.apache.shardingsphere.governance.repository.api.config.GovernanceConfiguration
 
 Attributes:
 
-| *Name*            | *Data Type* | *Description*                                                                                                                               |
-| ----------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| instanceType      | String      | The type of center instance(zookeeper/etcd/apollo/nacos)                                                                                    |
-| properties        | String      | Properties for center instance config, such as options of zookeeper                                                                         |
-| orchestrationType | String      | The type of orchestration center: config_center or registry_center or metadata_center, multiple types are separated by commas               |
-| serverLists       | String      | Connect to server lists in center, including IP address and port number; addresses are separated by commas, such as `host1:2181,host2:2181` |
-| namespace (?)     | String      | Namespace of center instance                                                                                                                |
+| *Name*                              | *Data Type*                         | *Description*                                                                                                       |
+| ----------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| name         | String  | Governance instance name |
+| registryCenterConfiguration         | GovernanceCenterConfiguration  | Config of registry-center |
+| additionalConfigCenterConfiguration | GovernanceCenterConfiguration  | Config additional of config-center |
 
-### Common Properties Configuration
+The type of registryCenter could be Zookeeper or etcd.
+The type of additional ConfigCenter could be Zookeeper or etcd, Apollo, Nacos.
 
-| *Name*          | *Data Type* | *Description*                                                                                                                             | *Default Value* |
-| --------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
-| overwrite       | boolean     | Local configurations overwrite config center configurations or not; if they overwrite, each start takes reference of local configurations | false           |
+*Governance Instance Configuration*
 
-### ZooKeeper Properties Configuration
+Class name: org.apache.shardingsphere.governance.repository.api.config.GovernanceCenterConfiguration
+
+Attributes:
+
+| *Name*        | *Data Type* | *Description*                                                                                                                                    |
+| ------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| type          | String      | Governance instance type, such as: Zookeeper, etcd, Apollo, Nacos                                                                             |
+| serverLists   | String      | The list of servers that connect to governance instance, including IP and port number, use commas to separate, such as: host1:2181,host2:2181 |                                                                                                                    |
+| props         | Properties  | Properties for center instance config, such as options of zookeeper                                                                              |
+| overwrite       | boolean     | Local configurations overwrite config center configurations or not; if they overwrite, each start takes reference of local configurations | 
+
+ZooKeeper Properties Configuration
 
 | *Name*                           | *Data Type* | *Description*                                  | *Default Value*       |
 | -------------------------------- | ----------- | ---------------------------------------------- | --------------------- |
@@ -44,13 +46,13 @@ Attributes:
 | timeToLiveSeconds (?)            | int         | Time to live seconds for ephemeral nodes       | 60 seconds            |
 
 
-### Etcd Properties Configuration
+Etcd Properties Configuration
 
 | *Name*                | *Data Type* | *Description*                         | *Default Value* |
 | --------------------- | ----------- | ------------------------------------- | --------------- |
 | timeToLiveSeconds (?) | long        | Time to live seconds for data persist | 30 seconds      |
 
-### Apollo Properties Configuration
+Apollo Properties Configuration
 
 | *Name*             | *Data Type* | *Description*                | *Default Value*       |
 | ------------------ | ----------- | ---------------------------- | --------------------- |
@@ -63,7 +65,7 @@ Attributes:
 | connectTimeout (?) | int         | Connect timeout milliseconds | 1000 milliseconds     |
 | readTimeout (?)    | int         | Read timeout milliseconds    | 5000 milliseconds     |
 
-### Nacos Properties Configuration
+Nacos Properties Configuration
 
 | *Name*      | *Data Type* | *Description* | *Default Value*               |
 | ----------- | ----------- | ------------- | ----------------------------- |

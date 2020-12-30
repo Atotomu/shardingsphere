@@ -151,12 +151,7 @@ public abstract class AbstractUnsupportedOperationConnection extends WrapperAdap
     public final Struct createStruct(final String typeName, final Object[] attributes) throws SQLException {
         throw new SQLFeatureNotSupportedException("createStruct");
     }
-    
-    @Override
-    public final boolean isValid(final int timeout) throws SQLException {
-        throw new SQLFeatureNotSupportedException("isValid");
-    }
-    
+
     @Override
     public final Properties getClientInfo() throws SQLException {
         throw new SQLFeatureNotSupportedException("getClientInfo");
@@ -173,7 +168,7 @@ public abstract class AbstractUnsupportedOperationConnection extends WrapperAdap
     }
     
     @Override
-    public final void setClientInfo(final Properties properties) {
+    public final void setClientInfo(final Properties props) {
         throw new UnsupportedOperationException("setClientInfo properties");
     }
 }

@@ -31,15 +31,11 @@ public abstract class TypedSPIConfiguration {
     
     private final String type;
     
-    private final Properties properties;
+    private final Properties props;
     
-    public TypedSPIConfiguration(final String type) {
-        this(type, null);
-    }
-    
-    public TypedSPIConfiguration(final String type, final Properties properties) {
+    protected TypedSPIConfiguration(final String type, final Properties props) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(type), "Type is required.");
         this.type = type;
-        this.properties = null == properties ? new Properties() : properties;
+        this.props = null == props ? new Properties() : props;
     }
 }

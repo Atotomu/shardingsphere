@@ -21,23 +21,29 @@ import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.common.primitives.Shorts;
 import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.apache.shardingsphere.infra.exception.ShardingSphereException;
 
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Date;
 
 /**
- * ResultSet utility class.
+ * ResultSet utility.
  */
-@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ResultSetUtil {
     
     /**
      * Convert value via expected class type.
-     * 
+     *
      * @param value original value
      * @param convertType expected class type
      * @return converted value
@@ -45,9 +51,21 @@ public final class ResultSetUtil {
     public static Object convertValue(final Object value, final Class<?> convertType) {
         if (null == value) {
             return convertNullValue(convertType);
-        } 
+        }
         if (value.getClass() == convertType) {
             return value;
+        }
+        if (LocalDateTime.class.equals(convertType)) {
+            return convertLocalDateTimeValue(value);
+        }
+        if (LocalDate.class.equals(convertType)) {
+            return convertLocalDateValue(value);
+        }
+        if (LocalTime.class.equals(convertType)) {
+            return convertLocalTimeValue(value);
+        }
+        if (URL.class.equals(convertType)) {
+            return convertURL(value);
         }
         if (value instanceof Number) {
             return convertNumberValue(value, convertType);
@@ -65,6 +83,63 @@ public final class ResultSetUtil {
         }
     }
     
+    private static Object convertURL(final Object value) {
+        String val = value.toString();
+        try {
+            return new URL(val);
+        } catch (final MalformedURLException ex) {
+            throw new ShardingSphereException("Unsupported Date type: URL for value %s", val);
+        }
+    }
+    
+    /**
+     * Convert object to BigDecimal.
+     *
+     * @param value current db object
+     * @param needScale need scale
+     * @param scale scale size
+     * @return big decimal
+     */
+    public static Object convertBigDecimalValue(final Object value, final boolean needScale, final int scale) {
+        if (null == value) {
+            return convertNullValue(BigDecimal.class);
+        }
+        if (value.getClass() == BigDecimal.class) {
+            return adjustBigDecimalResult((BigDecimal) value, needScale, scale);
+        }
+        if (value instanceof Number || value instanceof String) {
+            BigDecimal bigDecimal = new BigDecimal(value.toString());
+            return adjustBigDecimalResult(bigDecimal, needScale, scale);
+        }
+        throw new ShardingSphereException("Unsupported Date type: BigDecimal for value %s", value);
+    }
+  
+    private static BigDecimal adjustBigDecimalResult(final BigDecimal value, final boolean needScale, final int scale) {
+        if (needScale) {
+            try {
+                return value.setScale(scale);
+            } catch (final ArithmeticException ex) {
+                return value.setScale(scale, BigDecimal.ROUND_HALF_UP);
+            }
+        }
+        return value;
+    }
+
+    private static Object convertLocalDateTimeValue(final Object value) {
+        Timestamp timestamp = (Timestamp) value;
+        return timestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+    }
+
+    private static Object convertLocalDateValue(final Object value) {
+        Timestamp timestamp = (Timestamp) value;
+        return timestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    }
+
+    private static Object convertLocalTimeValue(final Object value) {
+        Timestamp timestamp = (Timestamp) value;
+        return timestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalTime();
+    }
+
     private static Object convertNullValue(final Class<?> convertType) {
         switch (convertType.getName()) {
             case "boolean":
@@ -78,9 +153,9 @@ public final class ResultSetUtil {
             case "long":
                 return 0L;
             case "float":
-                return 0F;
+                return 0.0F;
             case "double":
-                return 0D;
+                return 0.0D;
             default:
                 return null;
         }
@@ -110,7 +185,7 @@ public final class ResultSetUtil {
             case "java.lang.String":
                 return value.toString();
             default:
-                throw new ShardingSphereException("Unsupported data type: %s", convertType);
+                throw new ShardingSphereException("Unsupported data type: %s for value %s", convertType, value);
         }
     }
     
@@ -126,7 +201,7 @@ public final class ResultSetUtil {
             case "java.lang.String":
                 return date.toString();
             default:
-                throw new ShardingSphereException("Unsupported Date type: %s", convertType);
+                throw new ShardingSphereException("Unsupported Date type: %s for value %s", convertType, value);
         }
     }
     

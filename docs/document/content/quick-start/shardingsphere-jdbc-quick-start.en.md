@@ -25,8 +25,8 @@ Please refer to [Configuration Manual](/en/user-manual/shardingsphere-jdbc/confi
 ## 3. Create Data Source
 
 Use `ShardingSphereDataSourceFactory` and rule configurations to create `ShardingSphereDataSource`, which implements DataSource interface of JDBC. 
-It can used for native JDBC or JPA, MyBatis and other ORM frameworks.
+It can be used for native JDBC or JPA, MyBatis and other ORM frameworks.
 
 ```java
-DataSource dataSource = ShardingSphereDataSourceFactory.createDataSource(dataSourceMap, configurations, props);
+DataSource dataSource = ShardingSphereDataSourceFactory.createDataSource(dataSourceMap, configurations, properties);
 ```

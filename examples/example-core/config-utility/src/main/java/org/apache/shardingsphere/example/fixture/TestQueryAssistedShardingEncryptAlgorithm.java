@@ -17,28 +17,9 @@
 
 package org.apache.shardingsphere.example.fixture;
 
-import org.apache.shardingsphere.encrypt.strategy.spi.QueryAssistedEncryptAlgorithm;
-
-import java.util.Properties;
+import org.apache.shardingsphere.encrypt.spi.QueryAssistedEncryptAlgorithm;
 
 public final class TestQueryAssistedShardingEncryptAlgorithm implements QueryAssistedEncryptAlgorithm {
-    
-    private Properties properties = new Properties();
-    
-    @Override
-    public String getType() {
-        return "assistedTest";
-    }
-    
-    @Override
-    public Properties getProperties() {
-        return properties;
-    }
-    
-    @Override
-    public void setProperties(final Properties properties) {
-        this.properties = properties;
-    }
     
     @Override
     public void init() {
@@ -57,5 +38,10 @@ public final class TestQueryAssistedShardingEncryptAlgorithm implements QueryAss
     @Override
     public String queryAssistedEncrypt(final String plaintext) {
         return "assistedEncryptValue";
+    }
+    
+    @Override
+    public String getType() {
+        return "assistedTest";
     }
 }

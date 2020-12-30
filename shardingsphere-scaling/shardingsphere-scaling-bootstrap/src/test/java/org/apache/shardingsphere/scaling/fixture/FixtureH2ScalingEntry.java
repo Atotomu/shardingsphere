@@ -17,18 +17,20 @@
 
 package org.apache.shardingsphere.scaling.fixture;
 
-import org.apache.shardingsphere.scaling.core.job.preparer.checker.DataSourceChecker;
-import org.apache.shardingsphere.scaling.core.job.position.LogPositionManager;
 import org.apache.shardingsphere.scaling.core.execute.executor.dumper.JDBCDumper;
 import org.apache.shardingsphere.scaling.core.execute.executor.dumper.LogDumper;
 import org.apache.shardingsphere.scaling.core.execute.executor.importer.Importer;
+import org.apache.shardingsphere.scaling.core.execute.executor.sqlbuilder.ScalingSQLBuilder;
+import org.apache.shardingsphere.scaling.core.job.check.DataConsistencyChecker;
+import org.apache.shardingsphere.scaling.core.job.position.PositionManager;
+import org.apache.shardingsphere.scaling.core.job.preparer.checker.DataSourceChecker;
 import org.apache.shardingsphere.scaling.core.spi.ScalingEntry;
 
 public final class FixtureH2ScalingEntry implements ScalingEntry {
     
     @Override
     public Class<? extends JDBCDumper> getJdbcDumperClass() {
-        return null;
+        return FixtureH2JDBCDumper.class;
     }
     
     @Override
@@ -37,18 +39,28 @@ public final class FixtureH2ScalingEntry implements ScalingEntry {
     }
     
     @Override
-    public Class<? extends LogPositionManager> getLogPositionManager() {
-        return FixtureNopLogManager.class;
+    public Class<? extends PositionManager> getPositionManager() {
+        return FixturePositionManager.class;
     }
     
     @Override
     public Class<? extends Importer> getImporterClass() {
-        return null;
+        return FixtureNopImporter.class;
     }
-
+    
     @Override
-    public Class<? extends DataSourceChecker> getCheckerClass() {
+    public Class<? extends DataSourceChecker> getDataSourceCheckerClass() {
         return FixtureH2DataSourceChecker.class;
+    }
+    
+    @Override
+    public Class<? extends DataConsistencyChecker> getDataConsistencyCheckerClass() {
+        return FixtureDataConsistencyChecker.class;
+    }
+    
+    @Override
+    public Class<? extends ScalingSQLBuilder> getSQLBuilderClass() {
+        return null;
     }
     
     @Override

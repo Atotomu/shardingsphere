@@ -18,14 +18,14 @@
 package org.apache.shardingsphere.driver.jdbc.core.resultset;
 
 import org.apache.shardingsphere.driver.jdbc.core.connection.ShardingSphereConnection;
-import org.apache.shardingsphere.driver.jdbc.core.context.RuntimeContext;
 import org.apache.shardingsphere.driver.jdbc.core.statement.ShardingSphereStatement;
 import org.apache.shardingsphere.infra.config.properties.ConfigurationProperties;
+import org.apache.shardingsphere.infra.context.metadata.MetaDataContexts;
+import org.apache.shardingsphere.infra.context.metadata.impl.StandardMetaDataContexts;
 import org.apache.shardingsphere.infra.executor.sql.context.ExecutionContext;
 import org.apache.shardingsphere.infra.merge.result.MergedResult;
-import org.apache.shardingsphere.kernel.context.SchemaContexts;
-import org.apache.shardingsphere.sql.parser.binder.segment.table.TablesContext;
-import org.apache.shardingsphere.sql.parser.binder.statement.SQLStatementContext;
+import org.apache.shardingsphere.infra.binder.segment.table.TablesContext;
+import org.apache.shardingsphere.infra.binder.statement.SQLStatementContext;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -34,6 +34,7 @@ import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
@@ -43,6 +44,8 @@ import java.sql.SQLException;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
@@ -65,8 +68,6 @@ public final class ShardingSphereResultSetTest {
     @Before
     public void setUp() throws SQLException {
         mergeResultSet = mock(MergedResult.class);
-        RuntimeContext runtimeContext = mock(RuntimeContext.class);
-        when(runtimeContext.getProperties()).thenReturn(new ConfigurationProperties(new Properties()));
         shardingSphereResultSet = new ShardingSphereResultSet(getResultSets(), mergeResultSet, getShardingSphereStatement(), createExecutionContext());
     }
     
@@ -91,9 +92,9 @@ public final class ShardingSphereResultSetTest {
     
     private ShardingSphereStatement getShardingSphereStatement() {
         ShardingSphereConnection connection = mock(ShardingSphereConnection.class);
-        SchemaContexts schemaContexts = mock(SchemaContexts.class);
-        when(schemaContexts.getProperties()).thenReturn(new ConfigurationProperties(new Properties()));
-        when(connection.getSchemaContexts()).thenReturn(schemaContexts);
+        MetaDataContexts metaDataContexts = mock(StandardMetaDataContexts.class);
+        when(metaDataContexts.getProps()).thenReturn(new ConfigurationProperties(new Properties()));
+        when(connection.getMetaDataContexts()).thenReturn(metaDataContexts);
         ShardingSphereStatement result = mock(ShardingSphereStatement.class);
         when(result.getConnection()).thenReturn(connection);
         return result;
@@ -172,26 +173,26 @@ public final class ShardingSphereResultSetTest {
     
     @Test
     public void assertGetFloatWithColumnIndex() throws SQLException {
-        when(mergeResultSet.getValue(1, float.class)).thenReturn(1F);
-        assertThat(shardingSphereResultSet.getFloat(1), is(1F));
+        when(mergeResultSet.getValue(1, float.class)).thenReturn(1.0F);
+        assertThat(shardingSphereResultSet.getFloat(1), is(1.0F));
     }
     
     @Test
     public void assertGetFloatWithColumnLabel() throws SQLException {
-        when(mergeResultSet.getValue(1, float.class)).thenReturn(1F);
-        assertThat(shardingSphereResultSet.getFloat("label"), is(1F));
+        when(mergeResultSet.getValue(1, float.class)).thenReturn(1.0F);
+        assertThat(shardingSphereResultSet.getFloat("label"), is(1.0F));
     }
     
     @Test
     public void assertGetDoubleWithColumnIndex() throws SQLException {
-        when(mergeResultSet.getValue(1, double.class)).thenReturn(1D);
-        assertThat(shardingSphereResultSet.getDouble(1), is(1D));
+        when(mergeResultSet.getValue(1, double.class)).thenReturn(1.0D);
+        assertThat(shardingSphereResultSet.getDouble(1), is(1.0D));
     }
     
     @Test
     public void assertGetDoubleWithColumnLabel() throws SQLException {
-        when(mergeResultSet.getValue(1, double.class)).thenReturn(1D);
-        assertThat(shardingSphereResultSet.getDouble("label"), is(1D));
+        when(mergeResultSet.getValue(1, double.class)).thenReturn(1.0D);
+        assertThat(shardingSphereResultSet.getDouble("label"), is(1.0D));
     }
     
     @Test
@@ -417,6 +418,20 @@ public final class ShardingSphereResultSetTest {
     }
     
     @Test
+    public void assertGetArrayWithColumnIndex() throws SQLException {
+        Array array = mock(Array.class);
+        when(mergeResultSet.getValue(1, Array.class)).thenReturn(array);
+        assertThat(shardingSphereResultSet.getArray(1), is(array));
+    }
+    
+    @Test
+    public void assertGetArrayWithColumnLabel() throws SQLException {
+        Array array = mock(Array.class);
+        when(mergeResultSet.getValue(1, Array.class)).thenReturn(array);
+        assertThat(shardingSphereResultSet.getArray("label"), is(array));
+    }
+    
+    @Test
     public void assertGetURLWithColumnIndex() throws SQLException, MalformedURLException {
         when(mergeResultSet.getValue(1, URL.class)).thenReturn(new URL("http://xxx.xxx"));
         assertThat(shardingSphereResultSet.getURL(1), is(new URL("http://xxx.xxx")));
@@ -452,5 +467,13 @@ public final class ShardingSphereResultSetTest {
     public void assertGetObjectWithColumnLabel() throws SQLException {
         when(mergeResultSet.getValue(1, Object.class)).thenReturn("object_value");
         assertThat(shardingSphereResultSet.getObject("label"), is("object_value"));
+    }
+
+    @Test
+    public void assertGetObjectWithLocalDateColumnLabel() throws SQLException {
+        LocalDateTime now = LocalDateTime.now();
+        long curMillis = now.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        when(mergeResultSet.getValue(1, Timestamp.class)).thenReturn(new Timestamp(curMillis));
+        assertThat(shardingSphereResultSet.getObject(1, LocalDateTime.class), is(now));
     }
 }

@@ -54,7 +54,7 @@ public abstract class AbstractResultSetAdapter extends AbstractUnsupportedOperat
     @Getter
     private final ExecutionContext executionContext;
     
-    public AbstractResultSetAdapter(final List<ResultSet> resultSets, final Statement statement, final ExecutionContext executionContext) {
+    protected AbstractResultSetAdapter(final List<ResultSet> resultSets, final Statement statement, final ExecutionContext executionContext) {
         Preconditions.checkArgument(!resultSets.isEmpty());
         this.resultSets = resultSets;
         this.statement = statement;
@@ -69,7 +69,7 @@ public abstract class AbstractResultSetAdapter extends AbstractUnsupportedOperat
     private Collection<ShardingSphereRule> getRules() {
         ShardingSphereConnection connection = statement instanceof ShardingSpherePreparedStatement
                 ? ((ShardingSpherePreparedStatement) statement).getConnection() : ((ShardingSphereStatement) statement).getConnection();
-        return connection.getSchemaContexts().getDefaultSchemaContext().getSchema().getRules();
+        return connection.getMetaDataContexts().getDefaultMetaData().getRuleMetaData().getRules();
     }
     
     @Override

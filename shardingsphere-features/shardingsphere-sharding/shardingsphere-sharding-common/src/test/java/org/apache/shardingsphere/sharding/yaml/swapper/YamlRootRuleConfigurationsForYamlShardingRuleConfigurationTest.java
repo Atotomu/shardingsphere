@@ -17,6 +17,7 @@
 
 package org.apache.shardingsphere.sharding.yaml.swapper;
 
+import org.apache.shardingsphere.infra.config.properties.ConfigurationPropertyKey;
 import org.apache.shardingsphere.sharding.yaml.config.YamlShardingRuleConfiguration;
 import org.apache.shardingsphere.infra.yaml.config.YamlRootRuleConfigurations;
 import org.apache.shardingsphere.infra.yaml.engine.YamlEngine;
@@ -68,47 +69,46 @@ public final class YamlRootRuleConfigurationsForYamlShardingRuleConfigurationTes
     
     private void assertYamlShardingConfiguration(final YamlRootRuleConfigurations actual) {
         assertDataSourceMap(actual);
-        Optional<YamlShardingRuleConfiguration> shardingRuleConfiguration = actual.getRules().stream().filter(
-            each -> each instanceof YamlShardingRuleConfiguration).findFirst().map(configuration -> (YamlShardingRuleConfiguration) configuration);
-        assertTrue(shardingRuleConfiguration.isPresent());
-        assertThat(shardingRuleConfiguration.get().getTables().size(), is(4));
-        assertTUser(shardingRuleConfiguration.get());
-        assertTStock(shardingRuleConfiguration.get());
-        assertTOrder(shardingRuleConfiguration.get());
-        assertTOrderItem(shardingRuleConfiguration.get());
-        assertBindingTable(shardingRuleConfiguration.get());
-        assertBroadcastTable(shardingRuleConfiguration.get());
+        Optional<YamlShardingRuleConfiguration> shardingRuleConfig = actual.getRules().stream().filter(
+            each -> each instanceof YamlShardingRuleConfiguration).findFirst().map(config -> (YamlShardingRuleConfiguration) config);
+        assertTrue(shardingRuleConfig.isPresent());
+        assertThat(shardingRuleConfig.get().getTables().size(), is(4));
+        assertTUser(shardingRuleConfig.get());
+        assertTStock(shardingRuleConfig.get());
+        assertTOrder(shardingRuleConfig.get());
+        assertTOrderItem(shardingRuleConfig.get());
+        assertBindingTable(shardingRuleConfig.get());
+        assertBroadcastTable(shardingRuleConfig.get());
         assertProps(actual);
     }
     
     private void assertTUser(final YamlShardingRuleConfiguration actual) {
         assertThat(actual.getTables().get("t_user").getActualDataNodes(), is("ds_${0..1}.t_user_${0..15}"));
         assertThat(actual.getTables().get("t_user").getDatabaseStrategy().getComplex().getShardingColumns(), is("region_id, user_id"));
-        assertThat(actual.getTables().get("t_user").getDatabaseStrategy().getComplex().getShardingAlgorithm().getType(), is("COMPLEX_TEST"));
+        assertThat(actual.getTables().get("t_user").getDatabaseStrategy().getComplex().getShardingAlgorithmName(), is("complex_test"));
         assertThat(actual.getTables().get("t_user").getTableStrategy().getComplex().getShardingColumns(), is("region_id, user_id"));
-        assertThat(actual.getTables().get("t_user").getTableStrategy().getComplex().getShardingAlgorithm().getType(), is("COMPLEX_TEST"));
+        assertThat(actual.getTables().get("t_user").getTableStrategy().getComplex().getShardingAlgorithmName(), is("complex_test"));
     }
     
     private void assertTStock(final YamlShardingRuleConfiguration actual) {
         assertThat(actual.getTables().get("t_stock").getActualDataNodes(), is("ds_${0..1}.t_stock{0..8}"));
-        assertThat(actual.getTables().get("t_stock").getDatabaseStrategy().getHint().getShardingAlgorithm().getType(), is("HINT_TEST"));
-        assertThat(actual.getTables().get("t_stock").getTableStrategy().getHint().getShardingAlgorithm().getType(), is("HINT_TEST"));
+        assertThat(actual.getTables().get("t_stock").getDatabaseStrategy().getHint().getShardingAlgorithmName(), is("hint_test"));
+        assertThat(actual.getTables().get("t_stock").getTableStrategy().getHint().getShardingAlgorithmName(), is("hint_test"));
     }
     
     private void assertTOrder(final YamlShardingRuleConfiguration actual) {
         assertThat(actual.getTables().get("t_order").getActualDataNodes(), is("ds_${0..1}.t_order_${0..1}"));
         assertThat(actual.getTables().get("t_order").getTableStrategy().getStandard().getShardingColumn(), is("order_id"));
-        assertThat(actual.getTables().get("t_order").getTableStrategy().getStandard().getShardingAlgorithm().getProps().getProperty("algorithm.expression"), 
-                is("t_order_${order_id % 2}"));
-        assertThat(actual.getTables().get("t_order").getKeyGenerator().getColumn(), is("order_id"));
-        assertThat(actual.getTables().get("t_order").getKeyGenerator().getType(), is("SNOWFLAKE"));
+        assertThat(actual.getTables().get("t_order").getTableStrategy().getStandard().getShardingAlgorithmName(), is("table_inline"));
+        assertThat(actual.getTables().get("t_order").getKeyGenerateStrategy().getColumn(), is("order_id"));
+        assertThat(actual.getTables().get("t_order").getKeyGenerateStrategy().getKeyGeneratorName(), is("snowflake"));
     }
     
     private void assertTOrderItem(final YamlShardingRuleConfiguration actual) {
         assertThat(actual.getTables().get("t_order_item").getActualDataNodes(), is("ds_${0..1}.t_order_item_${0..1}"));
         assertThat(actual.getTables().get("t_order_item").getTableStrategy().getStandard().getShardingColumn(), is("order_id"));
-        assertThat(actual.getTables().get("t_order_item").getTableStrategy().getStandard().getShardingAlgorithm().getType(), is("STANDARD_TEST"));
-        assertThat(actual.getTables().get("t_order_item").getTableStrategy().getStandard().getShardingAlgorithm().getType(), is("STANDARD_TEST"));
+        assertThat(actual.getTables().get("t_order_item").getTableStrategy().getStandard().getShardingAlgorithmName(), is("standard_test"));
+        assertThat(actual.getTables().get("t_order_item").getTableStrategy().getStandard().getShardingAlgorithmName(), is("standard_test"));
     }
     
     private void assertBindingTable(final YamlShardingRuleConfiguration actual) {
@@ -123,6 +123,6 @@ public final class YamlRootRuleConfigurationsForYamlShardingRuleConfigurationTes
     
     private void assertProps(final YamlRootRuleConfigurations actual) {
         assertThat(actual.getProps().size(), is(1));
-        assertThat(actual.getProps().get("sql.show"), is(true));
+        assertThat(actual.getProps().get(ConfigurationPropertyKey.SQL_SHOW.getKey()), is(true));
     }
 }

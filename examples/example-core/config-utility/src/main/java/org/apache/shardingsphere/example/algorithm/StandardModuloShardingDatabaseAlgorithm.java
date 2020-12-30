@@ -24,19 +24,22 @@ import org.apache.shardingsphere.sharding.api.sharding.standard.StandardSharding
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.Properties;
 import java.util.Set;
 
 public final class StandardModuloShardingDatabaseAlgorithm implements StandardShardingAlgorithm<Integer> {
     
     @Override
+    public void init() {
+    }
+    
+    @Override
     public String doSharding(final Collection<String> databaseNames, final PreciseShardingValue<Integer> shardingValue) {
         for (String each : databaseNames) {
-            if (each.endsWith(shardingValue.getValue() % 2 + "")) {
+            if (each.endsWith(String.valueOf(shardingValue.getValue() % 2))) {
                 return each;
             }
         }
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("");
     }
     
     @Override
@@ -57,7 +60,7 @@ public final class StandardModuloShardingDatabaseAlgorithm implements StandardSh
         } else if (Range.closed(1, 10).encloses(shardingValueRange.getValueRange())) {
             result.addAll(databaseNames);
         } else {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("");
         }
         return result;
     }
@@ -65,14 +68,5 @@ public final class StandardModuloShardingDatabaseAlgorithm implements StandardSh
     @Override
     public String getType() {
         return "STANDARD_TEST_DB";
-    }
-    
-    @Override
-    public Properties getProperties() {
-        return new Properties();
-    }
-    
-    @Override
-    public void setProperties(final Properties properties) {
     }
 }

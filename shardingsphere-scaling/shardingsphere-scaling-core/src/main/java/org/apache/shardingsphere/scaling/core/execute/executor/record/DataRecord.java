@@ -17,7 +17,9 @@
 
 package org.apache.shardingsphere.scaling.core.execute.executor.record;
 
-import org.apache.shardingsphere.scaling.core.job.position.LogPosition;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import org.apache.shardingsphere.scaling.core.job.position.Position;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -33,18 +35,21 @@ import java.util.List;
 @Setter
 @Getter
 @EqualsAndHashCode(of = {"tableName", "primaryKeyValue"}, callSuper = false)
+@ToString
 public final class DataRecord extends Record {
     
     private final List<Column> columns;
     
     private final List<Object> primaryKeyValue = new LinkedList<>();
     
+    private final List<Object> oldPrimaryKeyValues = new ArrayList<>();
+    
     private String type;
     
     private String tableName;
     
-    public DataRecord(final LogPosition logPosition, final int columnCount) {
-        super(logPosition);
+    public DataRecord(final Position<?> position, final int columnCount) {
+        super(position);
         columns = new ArrayList<>(columnCount);
     }
     
@@ -57,6 +62,7 @@ public final class DataRecord extends Record {
         columns.add(data);
         if (data.isPrimaryKey()) {
             primaryKeyValue.add(data.getValue());
+            oldPrimaryKeyValues.add(data.getOldValue());
         }
     }
     
@@ -77,5 +83,32 @@ public final class DataRecord extends Record {
      */
     public Column getColumn(final int index) {
         return columns.get(index);
+    }
+    
+    /**
+     * Get key.
+     *
+     * @return key
+     */
+    public Key getKey() {
+        return new Key(tableName, primaryKeyValue);
+    }
+    
+    /**
+     * Get old key.
+     *
+     * @return key
+     */
+    public Key getOldKey() {
+        return new Key(tableName, oldPrimaryKeyValues);
+    }
+    
+    @EqualsAndHashCode
+    @RequiredArgsConstructor
+    public static class Key {
+        
+        private final String tableName;
+        
+        private final List<Object> primaryKeyValues;
     }
 }

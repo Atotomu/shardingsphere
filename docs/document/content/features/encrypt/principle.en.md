@@ -27,14 +27,14 @@ just like using ordinary data.
 ### Encryption Rule
 
 Before explaining the whole process in detail, we need to understand the encryption rules and configuration, which is the basis of understanding the whole process. 
-The encryption configuration is mainly divided into four parts: data source configuration, encrypt strategy configuration, encryption table rule configuration, and query attribute configuration.
+The encryption configuration is mainly divided into four parts: data source configuration, encrypt algorithm configuration, encryption table rule configuration, and query attribute configuration.
  The details are shown in the following figure:
 
 ![2](https://shardingsphere.apache.org/document/current/img/encrypt/2_en.png)
 
 **Datasource Configuration**：The configuration of DataSource.
 
-**Encrypt Strategy Configuration**：What kind of encryption strategy to use for encryption and decryption. 
+**Encrypt Algorithm Configuration**：What kind of encryption strategy to use for encryption and decryption. 
 Currently ShardingSphere has two built-in encryption/decryption strategies: AES / MD5. 
 Users can also implement a set of encryption/decryption algorithms by implementing the interface provided by Apache ShardingSphere.
 
@@ -69,7 +69,7 @@ As shown below:
 ![3](https://shardingsphere.apache.org/document/current/img/encrypt/3_en.png)
 
 This is also the core meaning of Apache ShardingSphere, which is to separate user SQL from the underlying data table structure according to the encryption rules provided by the user, 
-so that the SQL writter by user no longer depends on the actual database table structure. 
+so that the SQL writer by user no longer depends on the actual database table structure. 
 The connection, mapping, and conversion between the user and the underlying database are handled by Apache ShardingSphere. 
 Why should we do this? 
 It is still the same : in order to enable the online business to seamlessly, transparently and safely perform data encryption migration.
@@ -95,17 +95,17 @@ It can also be different **. The recommended configuration is as follows (shown 
 
 ```yaml
 -!ENCRYPT
-  encryptStrategies:
-    aes_encrypt_strategy:
-      type: aes
+  encryptors:
+    aes_encryptor:
+      type: AES
       props:
-        aes.key.value: 123456abc
+        aes-key-value: 123456abc
   tables:
     t_user:
       columns:
         pwd:
           cipherColumn: pwd
-          encryptStrategyName: aes_encrypt_strategy
+          encryptorName: aes_encryptor
 ```
 
 With this configuration, Apache ShardingSphere only needs to convert logicColumn and cipherColumn. 
@@ -131,7 +131,7 @@ Such a simple and rough way, based on historical experience, will definitely not
 
 Then another relatively safe approach is to rebuild a pre-release environment exactly like the production environment, 
 and then encrypt the **Inventory plaintext data** of the production environment through the relevant migration and washing tools and store it in the pre-release environment. 
-The **Increment data** is encrypted by tools such as MySQL master-slave replication and the business party ’s own development, 
+The **Increment data** is encrypted by tools such as MySQL replica query and the business party ’s own development, 
 encrypted and stored in the database of the pre-release environment, and then the refactored code can be deployed to the pre-release environment. 
 In this way, the production environment is a set of environment for **modified/queries with plain text as the core**; 
 the pre-release environment is a set of **encrypt/decrypt queries modified with ciphertext as the core**. 
@@ -151,27 +151,27 @@ In addition, demonstrate a set of encryption configuration rules, as follows:
 
 ```yaml
 -!ENCRYPT
-  encryptStrategies:
-    aes_encrypt_strategy:
-      type: aes
+  encryptors:
+    aes_encryptor:
+      type: AES
       props:
-        aes.key.value: 123456abc
+        aes-key-value: 123456abc
   tables:
     t_user:
       columns:
         pwd:
           plainColumn: pwd
           cipherColumn: pwd_cipher
-          encryptStrategyName: aes_encrypt_strategy
+          encryptorName: aes_encryptor
 props:
-  query.with.cipher.column: false
+  query-with-cipher-column: false
 ```
 
 According to the above encryption rules, we need to add a column called pwd_cipher in the t_user table, that is, cipherColumn, which is used to store ciphertext data. 
 At the same time, we set plainColumn to pwd, which is used to store plaintext data, and logicColumn is also set to pwd. 
 Because the previous SQL was written using pwd, that is, the SQL was written for logical columns, so the business code did not need to be changed. 
 Through Apache ShardingSphere, for the incremental data, the plain text will be written to the pwd column, and the plain text will be encrypted and stored in the pwd_cipher column. 
-At this time, because query.with.cipher.column is set to false, for business applications, the plain text column of pwd is still used for query storage, 
+At this time, because query-with-cipher-column is set to false, for business applications, the plain text column of pwd is still used for query storage, 
 but the cipher text data of the new data is additionally stored on the underlying database table pwd_cipher. The processing flow is shown below:
 
 ![6](https://shardingsphere.apache.org/document/current/img/encrypt/6_en.png)
@@ -184,8 +184,8 @@ Now it is necessary to process historical plaintext inventory data.
 
 The incremental data has been stored by Apache ShardingSphere in the ciphertext column and the plaintext is stored in the plaintext column; after the historical data is encrypted and cleaned by the business party itself, 
 the ciphertext is also stored in the ciphertext column. That is to say, the plaintext and the ciphertext are stored in the current database. 
-Since the `query.with.cipher.column = false` in the configuration item, the ciphertext has never been used. 
-Now we need to set the `query.with.cipher.column` in the encryption configuration to true in order for the system to cut the ciphertext data for query. 
+Since the `query-with-cipher-column = false` in the configuration item, the ciphertext has never been used. 
+Now we need to set the `query-with-cipher-column` in the encryption configuration to true in order for the system to cut the ciphertext data for query. 
 After restarting the system, we found that the system business is normal, but Apache ShardingSphere has started to extract the ciphertext data from the database, 
 decrypt it and return it to the user; and for the user's insert, delete and update requirements, 
 the original data will still be stored The plaintext column, the encrypted ciphertext data is stored in the ciphertext column.
@@ -195,7 +195,7 @@ however, it will still save a copy of the original data to the plaintext column 
 Why? The answer is: in order to be able to roll back the system. 
 **Because as long as the ciphertext and plaintext always exist at the same time, we can freely switch the business query to cipherColumn or plainColumn through the configuration of the switch item.** 
 In other words, if the system is switched to the ciphertext column for query, the system reports an error and needs to be rolled back. 
-Then just set query.with.cipher.column = false, Apache ShardingSphere will restore, that is, start using plainColumn to query again. 
+Then just set query-with-cipher-column = false, Apache ShardingSphere will restore, that is, start using plainColumn to query again. 
 The processing flow is shown in the following figure:
 
 ![7](https://shardingsphere.apache.org/document/current/img/encrypt/7_en.png)
@@ -218,19 +218,19 @@ So the encryption configuration after migration is:
 
 ```yaml
 -!ENCRYPT
-  encryptStrategies:
-    aes_encrypt_strategy:
-      type: aes
+  encryptors:
+    aes_encryptor:
+      type: AES
       props:
-        aes.key.value: 123456abc
+        aes-key-value: 123456abc
   tables:
     t_user:
       columns:
         pwd: # pwd与pwd_cipher的转换映射
           cipherColumn: pwd_cipher
-          encryptStrategyName: aes_encrypt_strategy
+          encryptorName: aes_encryptor
 props:
-  query.with.cipher.column: true
+  query-with-cipher-column: true
 ```
 
 The processing flow is as follows:
