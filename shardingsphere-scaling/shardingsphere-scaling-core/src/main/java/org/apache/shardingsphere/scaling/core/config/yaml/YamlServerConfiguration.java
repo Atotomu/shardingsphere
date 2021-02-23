@@ -19,6 +19,7 @@ package org.apache.shardingsphere.scaling.core.config.yaml;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.shardingsphere.governance.core.yaml.config.YamlGovernanceConfiguration;
 import org.apache.shardingsphere.infra.yaml.config.YamlConfiguration;
 
 /**
@@ -28,13 +29,18 @@ import org.apache.shardingsphere.infra.yaml.config.YamlConfiguration;
 @Getter
 public final class YamlServerConfiguration implements YamlConfiguration {
     
-    private int port = 8080;
+    private YamlScalingConfiguration scaling = new YamlScalingConfiguration();
     
-    private int blockQueueSize = 10000;
+    private YamlGovernanceConfiguration governance;
     
-    private int pushTimeout = 1000;
+    @Getter
+    @Setter
+    public static final class YamlScalingConfiguration {
     
-    private int workerThread = 30;
+        private int port = 8080;
     
-    private YamlGovernanceConfiguration distributedScalingService;
+        private int blockQueueSize = 10000;
+    
+        private int workerThread = 30;
+    }
 }

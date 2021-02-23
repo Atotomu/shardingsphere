@@ -17,7 +17,6 @@
 
 package org.apache.shardingsphere.infra.context.metadata;
 
-import org.apache.shardingsphere.infra.auth.builtin.DefaultAuthentication;
 import org.apache.shardingsphere.infra.config.properties.ConfigurationPropertyKey;
 import org.apache.shardingsphere.infra.context.fixture.FixtureRule;
 import org.apache.shardingsphere.infra.context.fixture.FixtureRuleConfiguration;
@@ -42,7 +41,7 @@ public final class MetaDataContextsBuilderTest {
     public void assertBuildWithoutConfiguration() throws SQLException {
         MetaDataContexts actual = new MetaDataContextsBuilder(Collections.emptyMap(), Collections.emptyMap(), null).build();
         assertTrue(actual.getAllSchemaNames().isEmpty());
-        assertTrue(((DefaultAuthentication) actual.getAuthentication()).getUsers().isEmpty());
+        assertTrue(actual.getAuthentication().getAuthentication().isEmpty());
         assertTrue(actual.getProps().getProps().isEmpty());
     }
     
@@ -54,7 +53,7 @@ public final class MetaDataContextsBuilderTest {
                 Collections.singletonMap("logic_db", Collections.emptyMap()), Collections.singletonMap("logic_db", Collections.singleton(new FixtureRuleConfiguration())), props).build();
         assertRules(actual);
         assertTrue(actual.getMetaData("logic_db").getResource().getDataSources().isEmpty());
-        assertTrue(((DefaultAuthentication) actual.getAuthentication()).getUsers().isEmpty());
+        assertTrue(actual.getAuthentication().getAuthentication().isEmpty());
         assertThat(actual.getProps().getProps().size(), is(1));
         assertThat(actual.getProps().getValue(ConfigurationPropertyKey.EXECUTOR_SIZE), is(1));
     }
@@ -67,7 +66,7 @@ public final class MetaDataContextsBuilderTest {
                 Collections.singletonMap("logic_db", Collections.singleton(new FixtureRuleConfiguration())), props).build();
         assertRules(actual);
         assertDataSources(actual);
-        assertTrue(((DefaultAuthentication) actual.getAuthentication()).getUsers().isEmpty());
+        assertTrue(actual.getAuthentication().getAuthentication().isEmpty());
         assertThat(actual.getProps().getProps().size(), is(1));
         assertThat(actual.getProps().getValue(ConfigurationPropertyKey.EXECUTOR_SIZE), is(1));
     }

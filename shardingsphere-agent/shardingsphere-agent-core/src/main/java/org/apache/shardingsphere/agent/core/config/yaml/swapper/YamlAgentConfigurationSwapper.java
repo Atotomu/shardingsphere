@@ -17,16 +17,20 @@
 
 package org.apache.shardingsphere.agent.core.config.yaml.swapper;
 
-import java.util.Map;
-import java.util.stream.Collectors;
-import org.apache.shardingsphere.agent.core.config.AgentConfiguration;
-import org.apache.shardingsphere.agent.core.config.PluginConfiguration;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import org.apache.shardingsphere.agent.config.AgentConfiguration;
+import org.apache.shardingsphere.agent.config.PluginConfiguration;
 import org.apache.shardingsphere.agent.core.config.yaml.YamlAgentConfiguration;
 import org.apache.shardingsphere.agent.core.config.yaml.YamlPluginConfiguration;
+
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * YAML agent configuration swapper.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class YamlAgentConfigurationSwapper {
     
     /**
@@ -36,21 +40,11 @@ public final class YamlAgentConfigurationSwapper {
      * @return agent configuration
      */
     public static AgentConfiguration swap(final YamlAgentConfiguration yamlConfig) {
-        AgentConfiguration result = new AgentConfiguration();
-        result.setApplicationName(yamlConfig.getApplicationName());
-        result.setMetricsType(yamlConfig.getMetricsType());
-        result.setIgnorePlugins(yamlConfig.getIgnorePlugins());
         Map<String, PluginConfiguration> configurationMap = yamlConfig.getPlugins().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> transform(entry.getValue())));
-        result.setPlugins(configurationMap);
-        return result;
+        return new AgentConfiguration(yamlConfig.getApplicationName(), yamlConfig.getIgnoredPluginNames(), configurationMap);
     }
     
     private static PluginConfiguration transform(final YamlPluginConfiguration yamlConfig) {
-        PluginConfiguration result = new PluginConfiguration();
-        result.setHost(yamlConfig.getHost());
-        result.setPort(yamlConfig.getPort());
-        result.setProps(yamlConfig.getProps());
-        result.setPassword(yamlConfig.getPassword());
-        return result;
+        return new PluginConfiguration(yamlConfig.getHost(), yamlConfig.getPort(), yamlConfig.getPassword(), yamlConfig.getProps());
     }
 }

@@ -770,3 +770,155 @@ JSON
 DEC
     : D E C
     ;
+
+SHARING
+    : S H A R I N G
+    ;
+
+PRIVATE
+    : P R I V A T E
+    ;
+
+SHARDED
+    : S H A R D E D
+    ;
+
+DUPLICATED
+    : D U P L I C A T E D
+    ;
+
+METADATA
+    : M E T A D A T A
+    ;
+
+DATA
+    : D A T A
+    ;
+
+EXTENDED
+    : E X T E N D E D
+    ;
+
+NONE
+    : N O N E
+    ;
+
+MEMOPTIMIZE
+    : M E M O P T I M I Z E
+    ;
+
+PARENT
+    : P A R E N T
+    ;
+
+IDENTIFIER
+    : I D E N T I F I E R
+    ;
+
+WORK
+    : W O R K
+    ;
+
+CONTAINER_MAP
+    : C O N T A I N E R UL_ M A P
+    ;
+
+CONTAINERS_DEFAULT
+    : C O N T A I N E R S UL_ D E F A U L T
+    ;
+
+WAIT
+    : W A I T
+    ;
+
+NOWAIT
+    : N O W A I T
+    ;
+
+BATCH
+    : B A T C H
+    ;
+
+BLOCK
+    : B L O C K
+    ;
+
+REBUILD
+    : R E B U I L D
+    ;
+
+INVALIDATION
+    : I N V A L I D A T I O N
+    ;
+
+COMPILE
+    : C O M P I L E
+    ;
+
+USABLE
+    : U S A B L E
+    ;
+
+UNUSABLE
+    : U N U S A B L E
+    ;
+
+ONLINE
+    : O N L I N E
+    ;
+
+MONITORING
+    : M O N I T O R I N G
+    ;
+
+NOMONITORING
+    : N O M O N I T O R I N G
+    ;
+
+USAGE
+    : U S A G E
+    ;
+
+COALESCE
+    : C O A L E S C E
+    ;
+
+CLEANUP
+    : C L E A N U P
+    ;
+
+PARALLEL
+    : P A R A L L E L
+    ;
+
+INVALIDATION
+    : I N V A L I D A T I O N
+    ;
+
+LOG
+    : L O G
+    ;
+
+REUSE
+    : R E U S E
+    ;
+
+STORAGE
+    : S T O R A G E
+    ;
+
+ONLINE
+    : O N L I N E
+    ;
+
+MATCHED
+    : M A T C H E D
+    ;
+
+ERRORS
+    : E R R O R S
+    ;
+
+REJECT
+    : R E J E C T
+    ;

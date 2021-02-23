@@ -17,14 +17,17 @@
 
 package org.apache.shardingsphere.governance.core.registry;
 
+import org.apache.shardingsphere.governance.core.registry.schema.GovernanceSchema;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public final class RegistryCenterNodeTest {
     
@@ -42,7 +45,9 @@ public final class RegistryCenterNodeTest {
     
     @Test
     public void assertGetGovernanceSchema() {
-        assertThat(registryCenterNode.getGovernanceSchema("/states/datanodes/replica_query_db/replica_ds_0").get().getSchemaName(), is("replica_query_db"));
+        Optional<GovernanceSchema> actual = registryCenterNode.getGovernanceSchema("/states/datanodes/replica_query_db/replica_ds_0");
+        assertTrue(actual.isPresent());
+        assertThat(actual.get().getSchemaName(), is("replica_query_db"));
     }
     
     @Test
@@ -58,8 +63,10 @@ public final class RegistryCenterNodeTest {
     @Test
     public void assertGetAllSchemaPaths() {
         Collection<String> schemaPaths = registryCenterNode.getAllSchemaPaths(Arrays.asList("replica_query_db", "sharding_db"));
-        assertThat(schemaPaths.size(), is(2));
+        assertThat(schemaPaths.size(), is(4));
         assertThat(schemaPaths, hasItem("/states/datanodes/replica_query_db"));
         assertThat(schemaPaths, hasItem("/states/datanodes/sharding_db"));
+        assertThat(schemaPaths, hasItem("/states/primarynodes/replica_query_db"));
+        assertThat(schemaPaths, hasItem("/states/primarynodes/sharding_db"));
     }
 }

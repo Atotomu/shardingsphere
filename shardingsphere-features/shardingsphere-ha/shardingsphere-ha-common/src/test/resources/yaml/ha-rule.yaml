@@ -16,32 +16,44 @@
 #
 
 dataSources:
-  primary_ds_0: !!com.zaxxer.hikari.HikariDataSource
-    driverClassName: org.h2.Driver
-    jdbcUrl: jdbc:h2:mem:primary_ds;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false;MODE=MYSQL
-    username: sa
-    password: 
-  primary_ds_0_replica_0: !!com.zaxxer.hikari.HikariDataSource
-    driverClassName: org.h2.Driver
-    jdbcUrl: jdbc:h2:mem:replica_ds_0;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false;MODE=MYSQL
-    username: sa
-    password: 
-  primary_ds_0_replica_1: !!com.zaxxer.hikari.HikariDataSource
+  primary_ds_0:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    props:
+      driverClassName: org.h2.Driver
+      jdbcUrl: jdbc:h2:mem:primary_ds;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false;MODE=MYSQL
+      username: sa
+      password: 
+  primary_ds_0_replica_0:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    props:
+      driverClassName: org.h2.Driver
+      jdbcUrl: jdbc:h2:mem:replica_ds_0;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false;MODE=MYSQL
+      username: sa
+      password: 
+  primary_ds_0_replica_1:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    props:  
       driverClassName: org.h2.Driver
       jdbcUrl: jdbc:h2:mem:replica_ds_1;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false;MODE=MYSQL
       username: sa
       password: 
-  primary_ds_1: !!com.zaxxer.hikari.HikariDataSource
-    driverClassName: org.h2.Driver
-    jdbcUrl: jdbc:h2:mem:primary_ds;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false;MODE=MYSQL
-    username: sa
-    password: 
-  primary_ds_1_replica_0: !!com.zaxxer.hikari.HikariDataSource
-    driverClassName: org.h2.Driver
-    jdbcUrl: jdbc:h2:mem:replica_ds_0;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false;MODE=MYSQL
-    username: sa
-    password: 
-  primary_ds_1_replica_1: !!com.zaxxer.hikari.HikariDataSource
+  primary_ds_1:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    props:
+      driverClassName: org.h2.Driver
+      jdbcUrl: jdbc:h2:mem:primary_ds;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false;MODE=MYSQL
+      username: sa
+      password: 
+  primary_ds_1_replica_0:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    props:
+      driverClassName: org.h2.Driver
+      jdbcUrl: jdbc:h2:mem:replica_ds_0;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false;MODE=MYSQL
+      username: sa
+      password: 
+  primary_ds_1_replica_1:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    props:
       driverClassName: org.h2.Driver
       jdbcUrl: jdbc:h2:mem:replica_ds_1;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false;MODE=MYSQL
       username: sa
@@ -51,27 +63,28 @@ rules:
 - !HA
   dataSources:
     ds_0:
-      primaryDataSourceName: primary_ds_0
-      replicaDataSourceNames:
+      dataSourceNames:
         - primary_ds_0_replica_0
         - primary_ds_0_replica_1
       loadBalancerName: roundRobin
-      readWriteSplit: true
+      replicaQuery: true
+      haTypeName: mgr
     ds_1:
-      primaryDataSourceName: primary_ds_1
-      replicaDataSourceNames: 
+      dataSourceNames:
         - primary_ds_1_replica_0
         - primary_ds_1_replica_1
       loadBalancerName: random
-      readWriteSplit: false
+      replicaQuery: false
+      haTypeName: mgr
   loadBalancers:
     roundRobin:
       type: ROUND_ROBIN
     random:
       type: RANDOM
-
-  haType:
-    type: MGR
-    props:
-      groupName: 92504d5b-6dec-11e8-91ea-246e9612aaf1
-      keepAliveSeconds: '5'
+  haTypes:
+    mgr:
+      type: MGR
+      props:
+        groupName: 92504d5b-6dec-11e8-91ea-246e9612aaf1
+        zkServerLists: 'localhost:2181'
+        keepAliveCron: '0/5 * * * * ?'

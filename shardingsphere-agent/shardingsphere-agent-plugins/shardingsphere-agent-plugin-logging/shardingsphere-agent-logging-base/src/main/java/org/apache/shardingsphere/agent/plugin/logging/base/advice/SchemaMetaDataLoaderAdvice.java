@@ -17,22 +17,23 @@
 
 package org.apache.shardingsphere.agent.plugin.logging.base.advice;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.shardingsphere.agent.api.advice.ClassStaticMethodAroundAdvice;
+import org.apache.shardingsphere.agent.api.result.MethodInvocationResult;
+
 import java.lang.reflect.Method;
 import java.util.Collection;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.shardingsphere.agent.core.plugin.advice.MethodInvocationResult;
-import org.apache.shardingsphere.agent.core.plugin.advice.StaticMethodAroundAdvice;
 
 /**
  * Schema meta data loader advice.
  */
 @Slf4j
-public final class SchemaMetaDataLoaderAdvice implements StaticMethodAroundAdvice {
+public final class SchemaMetaDataLoaderAdvice implements ClassStaticMethodAroundAdvice {
     
     @Override
     @SuppressWarnings("unchecked")
-    public void afterMethod(final Class<?> klass, final Method method, final Object[] args, final MethodInvocationResult result) {
+    public void afterMethod(final Class<?> clazz, final Method method, final Object[] args, final MethodInvocationResult result) {
         Collection<String> results = (Collection<String>) result.getResult();
-        log.info("Loading {} tables' meta data for unconfigured tables.", results.size());
+        log.info("Loading {} tables.", results.size());
     }
 }

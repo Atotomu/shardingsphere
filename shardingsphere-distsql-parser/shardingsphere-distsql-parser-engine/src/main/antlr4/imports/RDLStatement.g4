@@ -23,6 +23,10 @@ addResource
     : ADD RESOURCE LP dataSource (COMMA dataSource)* RP
     ;
 
+dropResource
+    : DROP RESOURCE LP IDENTIFIER (COMMA IDENTIFIER)* RP
+    ;
+
 dataSource
     : dataSourceName EQ dataSourceDefinition
     ;
@@ -56,11 +60,15 @@ user
     ;
 
 password
-    : IDENTIFIER | NUMBER | STRING
+    : IDENTIFIER | INT | STRING
     ;
 
 createShardingRule
-    : CREATE SHARDING RULE LP shardingTableRuleDefinition (COMMA shardingTableRuleDefinition)* RP
+    : CREATE SHARDING RULE LP shardingTableRuleDefinition (COMMA shardingTableRuleDefinition)* bindingTables? defaultTableStrategy? broadcastTables? RP
+    ;
+
+alterShardingRule
+    : ALTER SHARDING RULE LP alterShardingTableRuleDefinition (COMMA alterShardingTableRuleDefinition)* alterBindingTables? defaultTableStrategy? broadcastTables? RP
     ;
 
 createReplicaQueryRule
@@ -68,7 +76,7 @@ createReplicaQueryRule
     ;
 
 replicaQueryRuleDefinition
-    : ruleName=IDENTIFIER LP PRIMARY EQ primary=schemaName COMMA REPLICA EQ schemaNames RP loadBalancer=IDENTIFIER LP algorithmProperties RP
+    : ruleName=IDENTIFIER LP PRIMARY EQ primary=schemaName COMMA REPLICA EQ schemaNames RP functionDefinition
     ;
 
 alterReplicaQueryRule
@@ -76,23 +84,75 @@ alterReplicaQueryRule
     ;
 
 alterReplicaQueryRuleDefinition
-    : ruleName=IDENTIFIER LP PRIMARY EQ primary=schemaName COMMA REPLICA EQ schemaNames RP (loadBalancer=IDENTIFIER LP algorithmProperties RP)?
+    : (MODIFY | ADD) ruleName=IDENTIFIER LP PRIMARY EQ primary=schemaName COMMA REPLICA EQ schemaNames RP functionDefinition?
+    ;
+
+alterShardingTableRuleDefinition
+    : (MODIFY | ADD) shardingTableRuleDefinition
     ;
 
 shardingTableRuleDefinition
-    : tableName columnName shardingAlgorithmType=IDENTIFIER LP algorithmProperties RP
+    : tableName resources? (columnName functionDefinition)? keyGenerateStrategy?
+    ;
+
+resources
+    : RESOURCE LP IDENTIFIER (COMMA IDENTIFIER)* RP
+    ;
+
+alterBindingTables
+    : alterBindingTable (COMMA alterBindingTable)*
+    ;
+
+alterBindingTable
+    : (ADD | DROP) bindingTable
+    ;
+
+bindingTables
+    : bindingTable (COMMA bindingTable)*
+    ;
+
+bindingTable
+    : BINDING_TABLE LP tableNames RP
+    ;
+
+defaultTableStrategy
+    : DEFAULT_TABLE_STRATEGY columnName? functionDefinition
+    ;
+
+broadcastTables
+    : BROADCAST_TABLES LP IDENTIFIER (COMMA IDENTIFIER)* RP
+    ;
+
+keyGenerateStrategy
+    : GENERATED_KEY columnName functionDefinition
+    ;
+
+actualDataNodes
+    : STRING (COMMA STRING)*
     ;
 
 tableName
     : IDENTIFIER
     ;
 
+tableNames
+    : IDENTIFIER+
+    ;
+
 columnName
     : IDENTIFIER
     ;
 
+dropReplicaQueryRule
+    : DROP REPLICA_QUERY RULE LP IDENTIFIER (COMMA IDENTIFIER)* RP
+    ;
+
 dropShardingRule
     : DROP SHARDING RULE LP tableName (COMMA tableName)* RP
+    ;
+
+showShardingRule
+    : SHOW SHARDING RULE (FROM schemaName)?
     ;
 
 schemaNames
@@ -101,6 +161,10 @@ schemaNames
 
 schemaName
     : IDENTIFIER
+    ;
+
+functionDefinition
+    : functionName=IDENTIFIER LP algorithmProperties? RP
     ;
 
 algorithmProperties
